@@ -14,7 +14,8 @@ type DHCPv6MsgType uint8
 
 // add constants for all DHCPv6 message types from RFC3315
 const (
-	DHCPv6MsgTypeSolicit DHCPv6MsgType = iota
+	_ DHCPv6MsgType = iota
+	DHCPv6MsgTypeSolicit
 	DHCPv6MsgTypeAdvertise
 	DHCPv6MsgTypeRequest
 	DHCPv6MsgTypeConfirm
@@ -28,6 +29,42 @@ const (
 	DHCPv6MsgTypeRelayForward
 	DHCPv6MsgTypeRelayReply
 )
+
+func (t DHCPv6MsgType) String() string {
+	name := func() string {
+		switch t {
+		case DHCPv6MsgTypeSolicit:
+			return "Solicit"
+		case DHCPv6MsgTypeAdvertise:
+			return "Advertise"
+		case DHCPv6MsgTypeRequest:
+			return "Request"
+		case DHCPv6MsgTypeConfirm:
+			return "Confirm"
+		case DHCPv6MsgTypeRenew:
+			return "Renew"
+		case DHCPv6MsgTypeRebind:
+			return "Rebind"
+		case DHCPv6MsgTypeReply:
+			return "Reply"
+		case DHCPv6MsgTypeRelease:
+			return "Release"
+		case DHCPv6MsgTypeDecline:
+			return "Decline"
+		case DHCPv6MsgTypeReconfigure:
+			return "Reconfigure"
+		case DHCPv6MsgTypeInformationRequest:
+			return "Information Request"
+		case DHCPv6MsgTypeRelayForward:
+			return "Relay Forward"
+		case DHCPv6MsgTypeRelayReply:
+			return "Relay Reply"
+		default:
+			return "Unknown"
+		}
+	}
+	return fmt.Sprintf("message type %s (%d)", name(), t)
+}
 
 type DHCPv6Options []DHCPv6Option
 

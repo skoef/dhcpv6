@@ -9,6 +9,7 @@ import (
 
 var (
 	errOptionTooShort = errors.New("option too short")
+	errOptionTooLong  = errors.New("option too long")
 )
 
 type DHCPv6OptionType uint8
@@ -112,27 +113,26 @@ func (o DHCPv6OptionClientID) String() string {
 	return fmt.Sprintf("client-ID %s", o.DUID)
 }
 
+// https://tools.ietf.org/html/rfc3315#section-22.3
+type DHCPv6OptionServerID struct {
+	*DHCPv6OptionBase
+	DUID DUID
+}
+
+func (o DHCPv6OptionServerID) String() string {
+	return fmt.Sprintf("server-ID %s", o.DUID)
+}
+
 // https://tools.ietf.org/html/rfc3315#section-22.4
 type DHCPv6OptionIANA struct {
 	*DHCPv6OptionBase
 	IAID uint32
-	T1   time.Duration
-	T2   time.Duration
+	T1   time.Duration // delay before Renew
+	T2   time.Duration // delay before Rebind
 }
 
 func (o DHCPv6OptionIANA) String() string {
-	output := "IA_NA"
-	if o.IAID != 0 {
-		output += fmt.Sprintf(" IAID:%d", o.IAID)
-	}
-	if o.T1.Seconds() != 0 {
-		output += fmt.Sprintf(" T1:%d", o.T1)
-	}
-	if o.T2.Seconds() != 0 {
-		output += fmt.Sprintf(" T2:%d", o.T2)
-	}
-
-	return output
+	return fmt.Sprintf("IA_NA IAID:%d T1:%d T2:%d", o.IAID, o.T1, o.T2)
 }
 
 // https://tools.ietf.org/html/rfc3315#section-22.7
@@ -174,6 +174,15 @@ func (o DHCPv6OptionElapsedTime) String() string {
 	return fmt.Sprintf("elapsed-time %v", o.ElapsedTime)
 }
 
+// https://tools.ietf.org/html/rfc3315#section-22.14
+type DHCPv6OptionRapidCommit struct {
+	*DHCPv6OptionBase
+}
+
+func (o DHCPv6OptionRapidCommit) String() string {
+	return "rapid-commit"
+}
+
 func ParseOptions(data []byte) (DHCPv6Options, error) {
 	// empty container
 	list := DHCPv6Options{}
@@ -196,7 +205,6 @@ func ParseOptions(data []byte) (DHCPv6Options, error) {
 		var currentOption DHCPv6Option
 		switch optionType {
 		case DHCPv6OptionTypeClientID:
-			// TODO: check valid option length
 			currentOption = &DHCPv6OptionClientID{
 				DHCPv6OptionBase: &DHCPv6OptionBase{
 					OptionType: optionType,
@@ -207,27 +215,21 @@ func ParseOptions(data []byte) (DHCPv6Options, error) {
 				return list, errOptionTooShort
 			}
 			currentOption.(*DHCPv6OptionClientID).DUID = duid
-		case DHCPv6OptionTypeOptionRequest:
-			// TODO: check valid option length
-			currentOption = &DHCPv6OptionOptionRequest{
+		case DHCPv6OptionTypeServerID:
+			currentOption = &DHCPv6OptionServerID{
 				DHCPv6OptionBase: &DHCPv6OptionBase{
 					OptionType: optionType,
 				},
 			}
-			currentOption.(*DHCPv6OptionOptionRequest).parseOptions(data[4 : 4+optionLen])
-			// TODO: parse options
-		case DHCPv6OptionTypeElapsedTime:
-			// TODO: check valid option length
-			currentOption = &DHCPv6OptionElapsedTime{
-				DHCPv6OptionBase: &DHCPv6OptionBase{
-					OptionType: optionType,
-				},
-				// elapsed time is expressed in hundredths of a second
-				// hence the 10 * millisecond
-				ElapsedTime: (time.Duration(binary.BigEndian.Uint16(data[4:4+optionLen])) * time.Millisecond * 10),
+			duid, err := parseDUID(data[4 : 4+optionLen])
+			if err != nil {
+				return list, errOptionTooShort
 			}
+			currentOption.(*DHCPv6OptionServerID).DUID = duid
 		case DHCPv6OptionTypeIANA:
-			// TODO: check valid option length
+			if optionLen < 12 {
+				return list, errOptionTooShort
+			}
 			currentOption = &DHCPv6OptionIANA{
 				DHCPv6OptionBase: &DHCPv6OptionBase{
 					OptionType: optionType,
@@ -236,7 +238,40 @@ func ParseOptions(data []byte) (DHCPv6Options, error) {
 			currentOption.(*DHCPv6OptionIANA).IAID = binary.BigEndian.Uint32(data[4:8])
 			currentOption.(*DHCPv6OptionIANA).T1 = time.Duration(binary.BigEndian.Uint32(data[8:12]))
 			currentOption.(*DHCPv6OptionIANA).T2 = time.Duration(binary.BigEndian.Uint32(data[12:16]))
-			// TODO: parse IANA options
+			//if optionLen > 12 {
+			//	TODO: parse IANA options
+			//}
+		case DHCPv6OptionTypeOptionRequest:
+			currentOption = &DHCPv6OptionOptionRequest{
+				DHCPv6OptionBase: &DHCPv6OptionBase{
+					OptionType: optionType,
+				},
+			}
+			if optionLen > 0 {
+				currentOption.(*DHCPv6OptionOptionRequest).parseOptions(data[4 : 4+optionLen])
+			}
+		case DHCPv6OptionTypeElapsedTime:
+			if optionLen != 2 {
+				return list, errOptionTooShort
+			}
+			currentOption = &DHCPv6OptionElapsedTime{
+				DHCPv6OptionBase: &DHCPv6OptionBase{
+					OptionType: optionType,
+				},
+				// elapsed time is expressed in hundredths of a second
+				// hence the 10 * millisecond
+				ElapsedTime: (time.Duration(binary.BigEndian.Uint16(data[4:4+optionLen])) * time.Millisecond * 10),
+			}
+		case DHCPv6OptionTypeRapidCommit:
+			if optionLen != 0 {
+				return list, errOptionTooLong
+			}
+
+			currentOption = &DHCPv6OptionRapidCommit{
+				DHCPv6OptionBase: &DHCPv6OptionBase{
+					OptionType: optionType,
+				},
+			}
 		default:
 			fmt.Printf("unhandled option type: %s\n", optionType)
 		}
