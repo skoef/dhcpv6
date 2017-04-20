@@ -126,13 +126,18 @@ func (o DHCPv6OptionServerID) String() string {
 // https://tools.ietf.org/html/rfc3315#section-22.4
 type DHCPv6OptionIANA struct {
 	*DHCPv6OptionBase
-	IAID uint32
-	T1   time.Duration // delay before Renew
-	T2   time.Duration // delay before Rebind
+	IAID    uint32
+	T1      time.Duration // delay before Renew
+	T2      time.Duration // delay before Rebind
+	Options DHCPv6Options
 }
 
 func (o DHCPv6OptionIANA) String() string {
-	return fmt.Sprintf("IA_NA IAID:%d T1:%d T2:%d", o.IAID, o.T1, o.T2)
+	output := fmt.Sprintf("IA_NA IAID:%d T1:%d T2:%d", o.IAID, o.T1, o.T2)
+	if len(o.Options) > 0 {
+		output += fmt.Sprintf(" %s", o.Options)
+	}
+	return output
 }
 
 // https://tools.ietf.org/html/rfc3315#section-22.7
@@ -238,9 +243,13 @@ func ParseOptions(data []byte) (DHCPv6Options, error) {
 			currentOption.(*DHCPv6OptionIANA).IAID = binary.BigEndian.Uint32(data[4:8])
 			currentOption.(*DHCPv6OptionIANA).T1 = time.Duration(binary.BigEndian.Uint32(data[8:12]))
 			currentOption.(*DHCPv6OptionIANA).T2 = time.Duration(binary.BigEndian.Uint32(data[12:16]))
-			//if optionLen > 12 {
-			//	TODO: parse IANA options
-			//}
+			if optionLen > 12 {
+				var err error
+				currentOption.(*DHCPv6OptionIANA).Options, err = ParseOptions(data[16 : optionLen+4])
+				if err != nil {
+					return list, err
+				}
+			}
 		case DHCPv6OptionTypeOptionRequest:
 			currentOption = &DHCPv6OptionOptionRequest{
 				DHCPv6OptionBase: &DHCPv6OptionBase{
