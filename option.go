@@ -152,6 +152,17 @@ func (o OptionIANA) String() string {
 	return output
 }
 
+// HasOption returns Option if this IA_NA option has OptionType t as option or
+// nil otherwise
+func (o OptionIANA) HasOption(t OptionType) Option {
+	for _, opt := range o.Options {
+		if opt.Type() == t {
+			return opt
+		}
+	}
+	return nil
+}
+
 // OptionIAAddress implements the IA Address option as described at
 // https://tools.ietf.org/html/rfc3315#section-22.6
 type OptionIAAddress struct {

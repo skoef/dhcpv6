@@ -74,14 +74,15 @@ type Message struct {
 	Options     Options
 }
 
-// HasOption returns true if this Message has MessageType t as option or false otherwise
-func (m Message) HasOption(t OptionType) bool {
+// HasOption returns Option if this Message has OptionType t as option or
+// nil otherwise
+func (m Message) HasOption(t OptionType) Option {
 	for _, o := range m.Options {
 		if o.Type() == t {
-			return true
+			return o
 		}
 	}
-	return false
+	return nil
 }
 
 func ParseMessage(data []byte) (*Message, error) {
