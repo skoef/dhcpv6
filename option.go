@@ -13,9 +13,10 @@ var (
 	errOptionTooLong  = errors.New("option too long")
 )
 
+// DHCPv6 option type
 type OptionType uint8
 
-//  Options types as described in RFC3315 and RFC3646
+//  Option types as described in RFC3315 and RFC3646
 const (
 	_ OptionType = iota
 	OptionTypeClientID
@@ -101,10 +102,12 @@ type optionBase struct {
 	OptionType OptionType
 }
 
+// Option -- interface to build various DHCPv6 options on
 type Option interface {
 	String() string
 }
 
+// OptionClientID -- Client Identifier option as described at
 // https://tools.ietf.org/html/rfc3315#section-22.2
 type OptionClientID struct {
 	*optionBase
@@ -115,7 +118,8 @@ func (o OptionClientID) String() string {
 	return fmt.Sprintf("client-ID %s", o.DUID)
 }
 
-// https://tools.ietf.org/html/rfc3315#section-22.3
+// OptionServerID -- Server Identifier option as described at
+//  https://tools.ietf.org/html/rfc3315#section-22.3
 type OptionServerID struct {
 	*optionBase
 	DUID DUID
@@ -125,7 +129,8 @@ func (o OptionServerID) String() string {
 	return fmt.Sprintf("server-ID %s", o.DUID)
 }
 
-// https://tools.ietf.org/html/rfc3315#section-22.4
+// OptionIANA -- Identity Association for Non-temporary Addresses option as
+// described in https://tools.ietf.org/html/rfc3315#section-22.4
 type OptionIANA struct {
 	*optionBase
 	IAID    uint32
@@ -142,6 +147,7 @@ func (o OptionIANA) String() string {
 	return output
 }
 
+// OptionIAAddress -- IA Address option as described at
 // https://tools.ietf.org/html/rfc3315#section-22.6
 type OptionIAAddress struct {
 	*optionBase
@@ -155,6 +161,7 @@ func (o OptionIAAddress) String() string {
 	return fmt.Sprintf("IA_ADDR %s pltime:%d vltime:%d", o.Address, o.PreferredLifetime, o.ValidLifetime)
 }
 
+// OptionOptionRequest -- Option Request option as described at
 // https://tools.ietf.org/html/rfc3315#section-22.7
 type OptionOptionRequest struct {
 	*optionBase
@@ -169,6 +176,7 @@ func (o OptionOptionRequest) String() string {
 	return output
 }
 
+// helper function to parse the DHCPv6 options requested in this specific option
 func (o *OptionOptionRequest) parseOptions(data []byte) error {
 	var options []OptionType
 	for {
@@ -184,7 +192,8 @@ func (o *OptionOptionRequest) parseOptions(data []byte) error {
 	return nil
 }
 
-// https://tools.ietf.org/html/rfc3315#section-22.9
+// OptionElapsedTime -- Elapsed Time option as described at
+//  https://tools.ietf.org/html/rfc3315#section-22.9
 type OptionElapsedTime struct {
 	*optionBase
 	ElapsedTime time.Duration
@@ -194,7 +203,10 @@ func (o OptionElapsedTime) String() string {
 	return fmt.Sprintf("elapsed-time %v", o.ElapsedTime)
 }
 
+// OptionRapidCommit -- Rapid Commit option as described at
 // https://tools.ietf.org/html/rfc3315#section-22.14
+// this option acts basically as a flag for the message carrying it
+// and has no further contents
 type OptionRapidCommit struct {
 	*optionBase
 }
@@ -203,6 +215,9 @@ func (o OptionRapidCommit) String() string {
 	return "rapid-commit"
 }
 
+// ParseOptions -- take DHCPv6 option bytes and parse every handled option,
+// looking at its type and the given length, and return a slice containing all
+// decoded structs
 func ParseOptions(data []byte) (Options, error) {
 	// empty container
 	list := Options{}
