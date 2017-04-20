@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"net"
 	"time"
 )
 
@@ -140,6 +141,19 @@ func (o DHCPv6OptionIANA) String() string {
 	return output
 }
 
+// https://tools.ietf.org/html/rfc3315#section-22.6
+type DHCPv6OptionIAAddress struct {
+	*DHCPv6OptionBase
+	Address           net.IP
+	PreferredLifetime time.Duration
+	ValidLifetime     time.Duration
+	// TODO: options
+}
+
+func (o DHCPv6OptionIAAddress) String() string {
+	return fmt.Sprintf("IA_ADDR %s pltime:%d vltime:%d", o.Address, o.PreferredLifetime, o.ValidLifetime)
+}
+
 // https://tools.ietf.org/html/rfc3315#section-22.7
 type DHCPv6OptionOptionRequest struct {
 	*DHCPv6OptionBase
@@ -249,6 +263,18 @@ func ParseOptions(data []byte) (DHCPv6Options, error) {
 				if err != nil {
 					return list, err
 				}
+			}
+		case DHCPv6OptionTypeIAAddress:
+			if optionLen < 24 {
+				return list, errOptionTooShort
+			}
+			currentOption = &DHCPv6OptionIAAddress{
+				DHCPv6OptionBase: &DHCPv6OptionBase{
+					OptionType: optionType,
+				},
+				Address:           data[4:20],
+				PreferredLifetime: time.Duration(binary.BigEndian.Uint32(data[20:24])),
+				ValidLifetime:     time.Duration(binary.BigEndian.Uint32(data[24:28])),
 			}
 		case DHCPv6OptionTypeOptionRequest:
 			currentOption = &DHCPv6OptionOptionRequest{
