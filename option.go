@@ -13,81 +13,81 @@ var (
 	errOptionTooLong  = errors.New("option too long")
 )
 
-type DHCPv6OptionType uint8
+type OptionType uint8
 
-// DHCPv6 Options types as described in RFC3315 and RFC3646
+//  Options types as described in RFC3315 and RFC3646
 const (
-	_ DHCPv6OptionType = iota
-	DHCPv6OptionTypeClientID
-	DHCPv6OptionTypeServerID
-	DHCPv6OptionTypeIANA
-	DHCPv6OptionTypeIATA
-	DHCPv6OptionTypeIAAddress
-	DHCPv6OptionTypeOptionRequest
-	DHCPv6OptionTypePreference
-	DHCPv6OptionTypeElapsedTime
-	DHCPv6OptionTypeRelayMessage
-	DHCPv6OptionTypeAuthentication
-	DHCPv6OptionTypeServerUnicast
-	DHCPv6OptionTypeStatusCode
-	DHCPv6OptionTypeRapidCommit
-	DHCPv6OptionTypeUserClass
-	DHCPv6OptionTypeVendorClass
-	DHCPv6OptionTypeVendorOption
-	DHCPv6OptionTypeInterfaceID
-	DHCPv6OptionTypeReconfigureMessage
-	DHCPv6OptionTypeReconfigureAccept
+	_ OptionType = iota
+	OptionTypeClientID
+	OptionTypeServerID
+	OptionTypeIANA
+	OptionTypeIATA
+	OptionTypeIAAddress
+	OptionTypeOptionRequest
+	OptionTypePreference
+	OptionTypeElapsedTime
+	OptionTypeRelayMessage
+	OptionTypeAuthentication
+	OptionTypeServerUnicast
+	OptionTypeStatusCode
+	OptionTypeRapidCommit
+	OptionTypeUserClass
+	OptionTypeVendorClass
+	OptionTypeVendorOption
+	OptionTypeInterfaceID
+	OptionTypeReconfigureMessage
+	OptionTypeReconfigureAccept
 	_
 	_
 	_
-	DHCPv6OptionTypeDNSServer
-	DHCPv6OptionTypeDNSSearchList
+	OptionTypeDNSServer
+	OptionTypeDNSSearchList
 )
 
-func (t DHCPv6OptionType) String() string {
+func (t OptionType) String() string {
 	name := func() string {
 		switch t {
-		case DHCPv6OptionTypeClientID:
+		case OptionTypeClientID:
 			return "Client Identifier"
-		case DHCPv6OptionTypeServerID:
+		case OptionTypeServerID:
 			return "Server Identifier"
-		case DHCPv6OptionTypeIANA:
+		case OptionTypeIANA:
 			return "Identity Association for Non-temporary Addresses"
-		case DHCPv6OptionTypeIATA:
+		case OptionTypeIATA:
 			return "Identity Association for Temporary Addresses"
-		case DHCPv6OptionTypeIAAddress:
+		case OptionTypeIAAddress:
 			return "Identity Association Address"
-		case DHCPv6OptionTypeOptionRequest:
+		case OptionTypeOptionRequest:
 			return "Option Request"
-		case DHCPv6OptionTypePreference:
+		case OptionTypePreference:
 			return "Preference"
-		case DHCPv6OptionTypeElapsedTime:
+		case OptionTypeElapsedTime:
 			return "Elapsed Time"
-		case DHCPv6OptionTypeRelayMessage:
+		case OptionTypeRelayMessage:
 			return "Relay Message"
-		case DHCPv6OptionTypeAuthentication:
+		case OptionTypeAuthentication:
 			return "Authentication"
-		case DHCPv6OptionTypeServerUnicast:
+		case OptionTypeServerUnicast:
 			return "Server Unicast"
-		case DHCPv6OptionTypeStatusCode:
+		case OptionTypeStatusCode:
 			return "Status Code"
-		case DHCPv6OptionTypeRapidCommit:
+		case OptionTypeRapidCommit:
 			return "Rapid Commit"
-		case DHCPv6OptionTypeUserClass:
+		case OptionTypeUserClass:
 			return "User Class"
-		case DHCPv6OptionTypeVendorClass:
+		case OptionTypeVendorClass:
 			return "Vendor Class"
-		case DHCPv6OptionTypeVendorOption:
+		case OptionTypeVendorOption:
 			return "Vendor-specific Information"
-		case DHCPv6OptionTypeInterfaceID:
+		case OptionTypeInterfaceID:
 			return "Interface-ID"
-		case DHCPv6OptionTypeReconfigureMessage:
+		case OptionTypeReconfigureMessage:
 			return "Reconfigure Message"
-		case DHCPv6OptionTypeReconfigureAccept:
+		case OptionTypeReconfigureAccept:
 			return "Reconfigure Accept"
-		case DHCPv6OptionTypeDNSServer:
+		case OptionTypeDNSServer:
 			return "DNS Server"
-		case DHCPv6OptionTypeDNSSearchList:
+		case OptionTypeDNSSearchList:
 			return "DNS Search List"
 		default:
 			return "Unknown"
@@ -96,44 +96,44 @@ func (t DHCPv6OptionType) String() string {
 	return fmt.Sprintf("option type %s (%d)", name(), t)
 }
 
-type DHCPv6OptionBase struct {
-	OptionType DHCPv6OptionType
+type OptionBase struct {
+	OptionType OptionType
 }
 
-type DHCPv6Option interface {
+type Option interface {
 	String() string
 }
 
 // https://tools.ietf.org/html/rfc3315#section-22.2
-type DHCPv6OptionClientID struct {
-	*DHCPv6OptionBase
+type OptionClientID struct {
+	*OptionBase
 	DUID DUID
 }
 
-func (o DHCPv6OptionClientID) String() string {
+func (o OptionClientID) String() string {
 	return fmt.Sprintf("client-ID %s", o.DUID)
 }
 
 // https://tools.ietf.org/html/rfc3315#section-22.3
-type DHCPv6OptionServerID struct {
-	*DHCPv6OptionBase
+type OptionServerID struct {
+	*OptionBase
 	DUID DUID
 }
 
-func (o DHCPv6OptionServerID) String() string {
+func (o OptionServerID) String() string {
 	return fmt.Sprintf("server-ID %s", o.DUID)
 }
 
 // https://tools.ietf.org/html/rfc3315#section-22.4
-type DHCPv6OptionIANA struct {
-	*DHCPv6OptionBase
+type OptionIANA struct {
+	*OptionBase
 	IAID    uint32
 	T1      time.Duration // delay before Renew
 	T2      time.Duration // delay before Rebind
-	Options DHCPv6Options
+	Options Options
 }
 
-func (o DHCPv6OptionIANA) String() string {
+func (o OptionIANA) String() string {
 	output := fmt.Sprintf("IA_NA IAID:%d T1:%d T2:%d", o.IAID, o.T1, o.T2)
 	if len(o.Options) > 0 {
 		output += fmt.Sprintf(" %s", o.Options)
@@ -142,25 +142,25 @@ func (o DHCPv6OptionIANA) String() string {
 }
 
 // https://tools.ietf.org/html/rfc3315#section-22.6
-type DHCPv6OptionIAAddress struct {
-	*DHCPv6OptionBase
+type OptionIAAddress struct {
+	*OptionBase
 	Address           net.IP
 	PreferredLifetime time.Duration
 	ValidLifetime     time.Duration
 	// TODO: options
 }
 
-func (o DHCPv6OptionIAAddress) String() string {
+func (o OptionIAAddress) String() string {
 	return fmt.Sprintf("IA_ADDR %s pltime:%d vltime:%d", o.Address, o.PreferredLifetime, o.ValidLifetime)
 }
 
 // https://tools.ietf.org/html/rfc3315#section-22.7
-type DHCPv6OptionOptionRequest struct {
-	*DHCPv6OptionBase
-	Options []DHCPv6OptionType
+type OptionOptionRequest struct {
+	*OptionBase
+	Options []OptionType
 }
 
-func (o DHCPv6OptionOptionRequest) String() string {
+func (o OptionOptionRequest) String() string {
 	output := "option-request"
 	for _, opt := range o.Options {
 		output += fmt.Sprintf(" %s", opt)
@@ -168,13 +168,13 @@ func (o DHCPv6OptionOptionRequest) String() string {
 	return output
 }
 
-func (o *DHCPv6OptionOptionRequest) parseOptions(data []byte) error {
-	var options []DHCPv6OptionType
+func (o *OptionOptionRequest) parseOptions(data []byte) error {
+	var options []OptionType
 	for {
 		if len(data) < 2 {
 			break
 		}
-		optionType := DHCPv6OptionType(binary.BigEndian.Uint16(data[:2]))
+		optionType := OptionType(binary.BigEndian.Uint16(data[:2]))
 		options = append(options, optionType)
 		data = data[2:]
 	}
@@ -184,36 +184,36 @@ func (o *DHCPv6OptionOptionRequest) parseOptions(data []byte) error {
 }
 
 // https://tools.ietf.org/html/rfc3315#section-22.9
-type DHCPv6OptionElapsedTime struct {
-	*DHCPv6OptionBase
+type OptionElapsedTime struct {
+	*OptionBase
 	ElapsedTime time.Duration
 }
 
-func (o DHCPv6OptionElapsedTime) String() string {
+func (o OptionElapsedTime) String() string {
 	return fmt.Sprintf("elapsed-time %v", o.ElapsedTime)
 }
 
 // https://tools.ietf.org/html/rfc3315#section-22.14
-type DHCPv6OptionRapidCommit struct {
-	*DHCPv6OptionBase
+type OptionRapidCommit struct {
+	*OptionBase
 }
 
-func (o DHCPv6OptionRapidCommit) String() string {
+func (o OptionRapidCommit) String() string {
 	return "rapid-commit"
 }
 
-func ParseOptions(data []byte) (DHCPv6Options, error) {
+func ParseOptions(data []byte) (Options, error) {
 	// empty container
-	list := DHCPv6Options{}
+	list := Options{}
 
-	// the first 4 bytes of a DHCPv6 option contain option type and data length
+	// the first 4 bytes of a  option contain option type and data length
 	// so that's the least amount of bytes expected
 	if len(data) < 4 {
 		return list, errOptionTooShort
 	}
 
 	for {
-		optionType := DHCPv6OptionType(binary.BigEndian.Uint16(data[0:2]))
+		optionType := OptionType(binary.BigEndian.Uint16(data[0:2]))
 		optionLen := binary.BigEndian.Uint16(data[2:4])
 		// check if we have at least the same amount of bytes this option's length
 		// is prescribing
@@ -221,11 +221,11 @@ func ParseOptions(data []byte) (DHCPv6Options, error) {
 			return list, errOptionTooShort
 		}
 
-		var currentOption DHCPv6Option
+		var currentOption Option
 		switch optionType {
-		case DHCPv6OptionTypeClientID:
-			currentOption = &DHCPv6OptionClientID{
-				DHCPv6OptionBase: &DHCPv6OptionBase{
+		case OptionTypeClientID:
+			currentOption = &OptionClientID{
+				OptionBase: &OptionBase{
 					OptionType: optionType,
 				},
 			}
@@ -233,10 +233,10 @@ func ParseOptions(data []byte) (DHCPv6Options, error) {
 			if err != nil {
 				return list, errOptionTooShort
 			}
-			currentOption.(*DHCPv6OptionClientID).DUID = duid
-		case DHCPv6OptionTypeServerID:
-			currentOption = &DHCPv6OptionServerID{
-				DHCPv6OptionBase: &DHCPv6OptionBase{
+			currentOption.(*OptionClientID).DUID = duid
+		case OptionTypeServerID:
+			currentOption = &OptionServerID{
+				OptionBase: &OptionBase{
 					OptionType: optionType,
 				},
 			}
@@ -244,66 +244,66 @@ func ParseOptions(data []byte) (DHCPv6Options, error) {
 			if err != nil {
 				return list, errOptionTooShort
 			}
-			currentOption.(*DHCPv6OptionServerID).DUID = duid
-		case DHCPv6OptionTypeIANA:
+			currentOption.(*OptionServerID).DUID = duid
+		case OptionTypeIANA:
 			if optionLen < 12 {
 				return list, errOptionTooShort
 			}
-			currentOption = &DHCPv6OptionIANA{
-				DHCPv6OptionBase: &DHCPv6OptionBase{
+			currentOption = &OptionIANA{
+				OptionBase: &OptionBase{
 					OptionType: optionType,
 				},
 			}
-			currentOption.(*DHCPv6OptionIANA).IAID = binary.BigEndian.Uint32(data[4:8])
-			currentOption.(*DHCPv6OptionIANA).T1 = time.Duration(binary.BigEndian.Uint32(data[8:12]))
-			currentOption.(*DHCPv6OptionIANA).T2 = time.Duration(binary.BigEndian.Uint32(data[12:16]))
+			currentOption.(*OptionIANA).IAID = binary.BigEndian.Uint32(data[4:8])
+			currentOption.(*OptionIANA).T1 = time.Duration(binary.BigEndian.Uint32(data[8:12]))
+			currentOption.(*OptionIANA).T2 = time.Duration(binary.BigEndian.Uint32(data[12:16]))
 			if optionLen > 12 {
 				var err error
-				currentOption.(*DHCPv6OptionIANA).Options, err = ParseOptions(data[16 : optionLen+4])
+				currentOption.(*OptionIANA).Options, err = ParseOptions(data[16 : optionLen+4])
 				if err != nil {
 					return list, err
 				}
 			}
-		case DHCPv6OptionTypeIAAddress:
+		case OptionTypeIAAddress:
 			if optionLen < 24 {
 				return list, errOptionTooShort
 			}
-			currentOption = &DHCPv6OptionIAAddress{
-				DHCPv6OptionBase: &DHCPv6OptionBase{
+			currentOption = &OptionIAAddress{
+				OptionBase: &OptionBase{
 					OptionType: optionType,
 				},
 				Address:           data[4:20],
 				PreferredLifetime: time.Duration(binary.BigEndian.Uint32(data[20:24])),
 				ValidLifetime:     time.Duration(binary.BigEndian.Uint32(data[24:28])),
 			}
-		case DHCPv6OptionTypeOptionRequest:
-			currentOption = &DHCPv6OptionOptionRequest{
-				DHCPv6OptionBase: &DHCPv6OptionBase{
+		case OptionTypeOptionRequest:
+			currentOption = &OptionOptionRequest{
+				OptionBase: &OptionBase{
 					OptionType: optionType,
 				},
 			}
 			if optionLen > 0 {
-				currentOption.(*DHCPv6OptionOptionRequest).parseOptions(data[4 : 4+optionLen])
+				currentOption.(*OptionOptionRequest).parseOptions(data[4 : 4+optionLen])
 			}
-		case DHCPv6OptionTypeElapsedTime:
+		case OptionTypeElapsedTime:
 			if optionLen != 2 {
 				return list, errOptionTooShort
 			}
-			currentOption = &DHCPv6OptionElapsedTime{
-				DHCPv6OptionBase: &DHCPv6OptionBase{
+			currentOption = &OptionElapsedTime{
+				OptionBase: &OptionBase{
 					OptionType: optionType,
 				},
 				// elapsed time is expressed in hundredths of a second
 				// hence the 10 * millisecond
 				ElapsedTime: (time.Duration(binary.BigEndian.Uint16(data[4:4+optionLen])) * time.Millisecond * 10),
 			}
-		case DHCPv6OptionTypeRapidCommit:
+		case OptionTypeRapidCommit:
 			if optionLen != 0 {
 				return list, errOptionTooLong
 			}
 
-			currentOption = &DHCPv6OptionRapidCommit{
-				DHCPv6OptionBase: &DHCPv6OptionBase{
+			currentOption = &OptionRapidCommit{
+				OptionBase: &OptionBase{
 					OptionType: optionType,
 				},
 			}

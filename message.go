@@ -10,54 +10,54 @@ var (
 	errMessageTooShort = errors.New("message too short")
 )
 
-type DHCPv6MsgType uint8
+type MessageType uint8
 
 // add constants for all DHCPv6 message types from RFC3315
 const (
-	_ DHCPv6MsgType = iota
-	DHCPv6MsgTypeSolicit
-	DHCPv6MsgTypeAdvertise
-	DHCPv6MsgTypeRequest
-	DHCPv6MsgTypeConfirm
-	DHCPv6MsgTypeRenew
-	DHCPv6MsgTypeRebind
-	DHCPv6MsgTypeReply
-	DHCPv6MsgTypeRelease
-	DHCPv6MsgTypeDecline
-	DHCPv6MsgTypeReconfigure
-	DHCPv6MsgTypeInformationRequest
-	DHCPv6MsgTypeRelayForward
-	DHCPv6MsgTypeRelayReply
+	_ MessageType = iota
+	MessageTypeSolicit
+	MessageTypeAdvertise
+	MessageTypeRequest
+	MessageTypeConfirm
+	MessageTypeRenew
+	MessageTypeRebind
+	MessageTypeReply
+	MessageTypeRelease
+	MessageTypeDecline
+	MessageTypeReconfigure
+	MessageTypeInformationRequest
+	MessageTypeRelayForward
+	MessageTypeRelayReply
 )
 
-func (t DHCPv6MsgType) String() string {
+func (t MessageType) String() string {
 	name := func() string {
 		switch t {
-		case DHCPv6MsgTypeSolicit:
+		case MessageTypeSolicit:
 			return "Solicit"
-		case DHCPv6MsgTypeAdvertise:
+		case MessageTypeAdvertise:
 			return "Advertise"
-		case DHCPv6MsgTypeRequest:
+		case MessageTypeRequest:
 			return "Request"
-		case DHCPv6MsgTypeConfirm:
+		case MessageTypeConfirm:
 			return "Confirm"
-		case DHCPv6MsgTypeRenew:
+		case MessageTypeRenew:
 			return "Renew"
-		case DHCPv6MsgTypeRebind:
+		case MessageTypeRebind:
 			return "Rebind"
-		case DHCPv6MsgTypeReply:
+		case MessageTypeReply:
 			return "Reply"
-		case DHCPv6MsgTypeRelease:
+		case MessageTypeRelease:
 			return "Release"
-		case DHCPv6MsgTypeDecline:
+		case MessageTypeDecline:
 			return "Decline"
-		case DHCPv6MsgTypeReconfigure:
+		case MessageTypeReconfigure:
 			return "Reconfigure"
-		case DHCPv6MsgTypeInformationRequest:
+		case MessageTypeInformationRequest:
 			return "Information Request"
-		case DHCPv6MsgTypeRelayForward:
+		case MessageTypeRelayForward:
 			return "Relay Forward"
-		case DHCPv6MsgTypeRelayReply:
+		case MessageTypeRelayReply:
 			return "Relay Reply"
 		default:
 			return "Unknown"
@@ -66,23 +66,23 @@ func (t DHCPv6MsgType) String() string {
 	return fmt.Sprintf("message type %s (%d)", name(), t)
 }
 
-type DHCPv6Options []DHCPv6Option
+type Options []Option
 
-type DHCPv6 struct {
-	MessageType DHCPv6MsgType
+type Message struct {
+	MessageType MessageType
 	Xid         uint32
-	Options     DHCPv6Options
+	Options     Options
 }
 
-func ParseMessage(data []byte) (*DHCPv6, error) {
-	// the first 4 bytes of a DHCPv6 message contain message type and transaction-id
+func ParseMessage(data []byte) (*Message, error) {
+	// the first 4 bytes of a  message contain message type and transaction-id
 	// so that's the least amount of bytes expected
 	if len(data) < 4 {
 		return nil, errMessageTooShort
 	}
 
-	d := &DHCPv6{
-		MessageType: DHCPv6MsgType(data[0]),
+	d := &Message{
+		MessageType: MessageType(data[0]),
 	}
 	data[0] = 0
 	d.Xid = binary.BigEndian.Uint32(data[0:4])
