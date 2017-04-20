@@ -102,9 +102,14 @@ type optionBase struct {
 	OptionType OptionType
 }
 
+func (o optionBase) Type() OptionType {
+	return o.OptionType
+}
+
 // Option -- interface to build various DHCPv6 options on
 type Option interface {
 	String() string
+	Type() OptionType
 }
 
 // OptionClientID implements the Client Identifier option as described at

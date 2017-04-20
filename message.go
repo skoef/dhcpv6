@@ -74,6 +74,16 @@ type Message struct {
 	Options     Options
 }
 
+// HasOption returns true if this Message has MessageType t as option or false otherwise
+func (m Message) HasOption(t OptionType) bool {
+	for _, o := range m.Options {
+		if o.Type() == t {
+			return true
+		}
+	}
+	return false
+}
+
 func ParseMessage(data []byte) (*Message, error) {
 	// the first 4 bytes of a  message contain message type and transaction-id
 	// so that's the least amount of bytes expected
