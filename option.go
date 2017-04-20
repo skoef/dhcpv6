@@ -96,7 +96,8 @@ func (t OptionType) String() string {
 	return fmt.Sprintf("option type %s (%d)", name(), t)
 }
 
-type OptionBase struct {
+// base struct to be embedded by all DHCPv6 options
+type optionBase struct {
 	OptionType OptionType
 }
 
@@ -106,7 +107,7 @@ type Option interface {
 
 // https://tools.ietf.org/html/rfc3315#section-22.2
 type OptionClientID struct {
-	*OptionBase
+	*optionBase
 	DUID DUID
 }
 
@@ -116,7 +117,7 @@ func (o OptionClientID) String() string {
 
 // https://tools.ietf.org/html/rfc3315#section-22.3
 type OptionServerID struct {
-	*OptionBase
+	*optionBase
 	DUID DUID
 }
 
@@ -126,7 +127,7 @@ func (o OptionServerID) String() string {
 
 // https://tools.ietf.org/html/rfc3315#section-22.4
 type OptionIANA struct {
-	*OptionBase
+	*optionBase
 	IAID    uint32
 	T1      time.Duration // delay before Renew
 	T2      time.Duration // delay before Rebind
@@ -143,7 +144,7 @@ func (o OptionIANA) String() string {
 
 // https://tools.ietf.org/html/rfc3315#section-22.6
 type OptionIAAddress struct {
-	*OptionBase
+	*optionBase
 	Address           net.IP
 	PreferredLifetime time.Duration
 	ValidLifetime     time.Duration
@@ -156,7 +157,7 @@ func (o OptionIAAddress) String() string {
 
 // https://tools.ietf.org/html/rfc3315#section-22.7
 type OptionOptionRequest struct {
-	*OptionBase
+	*optionBase
 	Options []OptionType
 }
 
@@ -185,7 +186,7 @@ func (o *OptionOptionRequest) parseOptions(data []byte) error {
 
 // https://tools.ietf.org/html/rfc3315#section-22.9
 type OptionElapsedTime struct {
-	*OptionBase
+	*optionBase
 	ElapsedTime time.Duration
 }
 
@@ -195,7 +196,7 @@ func (o OptionElapsedTime) String() string {
 
 // https://tools.ietf.org/html/rfc3315#section-22.14
 type OptionRapidCommit struct {
-	*OptionBase
+	*optionBase
 }
 
 func (o OptionRapidCommit) String() string {
@@ -225,7 +226,7 @@ func ParseOptions(data []byte) (Options, error) {
 		switch optionType {
 		case OptionTypeClientID:
 			currentOption = &OptionClientID{
-				OptionBase: &OptionBase{
+				optionBase: &optionBase{
 					OptionType: optionType,
 				},
 			}
@@ -236,7 +237,7 @@ func ParseOptions(data []byte) (Options, error) {
 			currentOption.(*OptionClientID).DUID = duid
 		case OptionTypeServerID:
 			currentOption = &OptionServerID{
-				OptionBase: &OptionBase{
+				optionBase: &optionBase{
 					OptionType: optionType,
 				},
 			}
@@ -250,7 +251,7 @@ func ParseOptions(data []byte) (Options, error) {
 				return list, errOptionTooShort
 			}
 			currentOption = &OptionIANA{
-				OptionBase: &OptionBase{
+				optionBase: &optionBase{
 					OptionType: optionType,
 				},
 			}
@@ -269,7 +270,7 @@ func ParseOptions(data []byte) (Options, error) {
 				return list, errOptionTooShort
 			}
 			currentOption = &OptionIAAddress{
-				OptionBase: &OptionBase{
+				optionBase: &optionBase{
 					OptionType: optionType,
 				},
 				Address:           data[4:20],
@@ -278,7 +279,7 @@ func ParseOptions(data []byte) (Options, error) {
 			}
 		case OptionTypeOptionRequest:
 			currentOption = &OptionOptionRequest{
-				OptionBase: &OptionBase{
+				optionBase: &optionBase{
 					OptionType: optionType,
 				},
 			}
@@ -290,7 +291,7 @@ func ParseOptions(data []byte) (Options, error) {
 				return list, errOptionTooShort
 			}
 			currentOption = &OptionElapsedTime{
-				OptionBase: &OptionBase{
+				optionBase: &optionBase{
 					OptionType: optionType,
 				},
 				// elapsed time is expressed in hundredths of a second
@@ -303,7 +304,7 @@ func ParseOptions(data []byte) (Options, error) {
 			}
 
 			currentOption = &OptionRapidCommit{
-				OptionBase: &OptionBase{
+				optionBase: &optionBase{
 					OptionType: optionType,
 				},
 			}
