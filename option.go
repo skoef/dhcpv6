@@ -28,6 +28,7 @@ const (
 	OptionTypePreference
 	OptionTypeElapsedTime
 	OptionTypeRelayMessage
+	_
 	OptionTypeAuthentication
 	OptionTypeServerUnicast
 	OptionTypeStatusCode
@@ -38,7 +39,6 @@ const (
 	OptionTypeInterfaceID
 	OptionTypeReconfigureMessage
 	OptionTypeReconfigureAccept
-	_
 	_
 	_
 	OptionTypeDNSServer
