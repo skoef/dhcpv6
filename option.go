@@ -219,6 +219,53 @@ func (o OptionElapsedTime) String() string {
 	return fmt.Sprintf("elapsed-time %v", o.ElapsedTime)
 }
 
+type StatusCode uint16
+
+// Status codes as described at https://tools.ietf.org/html/rfc3315#section-24.4
+const (
+	StatusCodeSuccess StatusCode = iota
+	StatusCodeUnspecFail
+	StatusCodeNoAddrsAvail
+	StatusCodeNoBinding
+	StatusCodeNotOnLink
+	StatusCodeUseMulticast
+)
+
+func (s StatusCode) String() string {
+	name := func() string {
+		switch s {
+		case StatusCodeSuccess:
+			return "Success"
+		case StatusCodeUnspecFail:
+			return "UnspecFail"
+		case StatusCodeNoAddrsAvail:
+			return "NoAddrsAvail"
+		case StatusCodeNoBinding:
+			return "NoBinding"
+		case StatusCodeNotOnLink:
+			return "NotOnLink"
+		case StatusCodeUseMulticast:
+			return "UseMulticast"
+		default:
+			return "Unknown"
+		}
+	}
+
+	return fmt.Sprintf("%s (%d)", name(), s)
+}
+
+// OptionStatusCode implements the Status Code option as described at
+// https://tools.ietf.org/html/rfc3315#section-22.13
+type OptionStatusCode struct {
+	*optionBase
+	Code    StatusCode
+	Message string
+}
+
+func (o OptionStatusCode) String() string {
+	return fmt.Sprintf("status-code %s: %s", o.Code, o.Message)
+}
+
 // OptionRapidCommit implements the Rapid Commit option as described at
 // https://tools.ietf.org/html/rfc3315#section-22.14
 // this option acts basically as a flag for the message carrying it
@@ -328,6 +375,18 @@ func ParseOptions(data []byte) (Options, error) {
 				// elapsed time is expressed in hundredths of a second
 				// hence the 10 * millisecond
 				ElapsedTime: (time.Duration(binary.BigEndian.Uint16(data[4:4+optionLen])) * time.Millisecond * 10),
+			}
+		case OptionTypeStatusCode:
+			if optionLen < 2 {
+				return list, errOptionTooShort
+			}
+			fmt.Printf("status code bytes: %v\n", data)
+			currentOption = &OptionStatusCode{
+				optionBase: &optionBase{
+					OptionType: optionType,
+				},
+				Code:    StatusCode(binary.BigEndian.Uint16(data[4:6])),
+				Message: string(data[6 : optionLen+4]),
 			}
 		case OptionTypeRapidCommit:
 			if optionLen != 0 {
