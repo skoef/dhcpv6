@@ -32,10 +32,15 @@ const (
 
 type DUID interface {
 	String() string
+	Type() DUIDType
 }
 
 type DUIDBase struct {
-	Type DUIDType
+	DUIDType DUIDType
+}
+
+func (d DUIDBase) Type() DUIDType {
+	return d.DUIDType
 }
 
 // DUIDLLT - as described in https://tools.ietf.org/html/rfc3315#section-9.2
@@ -74,7 +79,7 @@ func parseDUID(data []byte) (DUID, error) {
 	case DUIDTypeLLT:
 		currentDUID = &DUIDLLT{
 			DUIDBase: &DUIDBase{
-				Type: duidType,
+				DUIDType: duidType,
 			},
 			HardwareType: binary.BigEndian.Uint16(data[2:4]),
 			// as stated in RFC3315, DUID epoch is at Jan 1st 2000 (UTC)
