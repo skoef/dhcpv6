@@ -308,7 +308,7 @@ func ParseOptions(data []byte) (Options, error) {
 					OptionType: optionType,
 				},
 			}
-			duid, err := parseDUID(data[4 : 4+optionLen])
+			duid, err := DecodeDUID(data[4 : 4+optionLen])
 			if err != nil {
 				return list, errOptionTooShort
 			}
@@ -319,7 +319,7 @@ func ParseOptions(data []byte) (Options, error) {
 					OptionType: optionType,
 				},
 			}
-			duid, err := parseDUID(data[4 : 4+optionLen])
+			duid, err := DecodeDUID(data[4 : 4+optionLen])
 			if err != nil {
 				return list, errOptionTooShort
 			}

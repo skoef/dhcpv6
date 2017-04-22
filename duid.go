@@ -2,9 +2,14 @@ package dhcpv6
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
 	"time"
+)
+
+var (
+	errDUIDTooShort = errors.New("duid too short")
 )
 
 type DUIDType uint8
@@ -52,8 +57,6 @@ type DUIDLLT struct {
 }
 
 func (d DUIDLLT) String() string {
-	// client-ID hwaddr/time type 1 time 545494311 525400fa991f
-	//                                             52:54:00:fa:99:1f
 	return fmt.Sprintf("hwaddr/time type 1 time %d %v", d.Time.Unix(), d.LinkLayerAddress)
 }
 
@@ -71,12 +74,31 @@ type DUIDLL struct {
 	LinkLayerAddress net.HardwareAddr
 }
 
-func parseDUID(data []byte) (DUID, error) {
+func (d DUIDLL) String() string {
+	return fmt.Sprintf("hwaddr type 3 %v", d.LinkLayerAddress)
+}
+
+// DecodeDUID tries to decode given byte slice to one of the defined
+// DUIDTypes
+func DecodeDUID(data []byte) (DUID, error) {
+	var currentDUID DUID
+
+	// type is defined in the first 2 bytes
+	if len(data) < 2 {
+		return currentDUID, errDUIDTooShort
+	}
+
 	duidType := DUIDType(binary.BigEndian.Uint16(data[0:2]))
 
-	var currentDUID DUID
 	switch duidType {
 	case DUIDTypeLLT:
+		// DUID-LLT's should be at least 8 bytes
+		// containing hardware type, time
+		// the link layer address is variable in length, but here a regular MAC
+		// address is assumed
+		if len(data) < 8 {
+			return currentDUID, errDUIDTooShort
+		}
 		currentDUID = &DUIDLLT{
 			DUIDBase: &DUIDBase{
 				DUIDType: duidType,
@@ -85,8 +107,27 @@ func parseDUID(data []byte) (DUID, error) {
 			// as stated in RFC3315, DUID epoch is at Jan 1st 2000 (UTC)
 			// and golang Time works with an epoch at Jan 1st 1970 (UTC)
 			// I'm adding 30 years of seconds to the uint32 we decode
-			Time:             time.Unix(int64(binary.BigEndian.Uint32(data[4:8])+946771200), 0),
-			LinkLayerAddress: data[8:],
+			Time: time.Unix(int64(binary.BigEndian.Uint32(data[4:8])+946771200), 0),
+		}
+		if len(data) > 8 {
+			currentDUID.(*DUIDLLT).LinkLayerAddress = data[8:]
+		}
+	case DUIDTypeLL:
+		// DUID-LL's should be at least 4 bytes
+		// containing hardware type
+		// the link layer address is variable in length, but here a regular MAC
+		// address is assumed
+		if len(data) < 4 {
+			return currentDUID, errDUIDTooShort
+		}
+		currentDUID = &DUIDLL{
+			DUIDBase: &DUIDBase{
+				DUIDType: duidType,
+			},
+			HardwareType: binary.BigEndian.Uint16(data[2:4]),
+		}
+		if len(data) > 4 {
+			currentDUID.(*DUIDLL).LinkLayerAddress = data[4:]
 		}
 	default:
 		return currentDUID, fmt.Errorf("unhandled duidType %s", duidType)
