@@ -134,8 +134,7 @@ func (o OptionClientID) Type() OptionType {
 func (o OptionClientID) Marshal() ([]byte, error) {
 	// prepare byte slice of appropriate length
 	// DUID will be appended later
-	lgth := 4 // type (2 bytes), length (2 bytes)
-	b := make([]byte, lgth)
+	b := make([]byte, 4) // type (2 bytes), length (2 bytes)
 	// set type
 	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeClientID))
 	// length depends on length of DUID
@@ -170,8 +169,7 @@ func (o OptionServerID) Type() OptionType {
 func (o OptionServerID) Marshal() ([]byte, error) {
 	// prepare byte slice of appropriate length
 	// DUID will be appended later
-	lgth := 4 // type (2 bytes), length (2 bytes)
-	b := make([]byte, lgth)
+	b := make([]byte, 4) // type (2 bytes), length (2 bytes)
 	// set type
 	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeServerID))
 	// length depends on length of DUID
@@ -204,6 +202,37 @@ func (o OptionIANA) String() string {
 	return output
 }
 
+// Type returns OptionIANA
+func (o OptionIANA) Type() OptionType {
+	return OptionTypeIANA
+}
+
+// Marshal returns byte slice representing this OptionIANA
+func (o OptionIANA) Marshal() ([]byte, error) {
+	// prepare byte slice of appropriate length
+	// any options will be appended later
+	optlen := 12
+	b := make([]byte, 4+optlen) // type + length + iaid + t1 + t2
+	// set type
+	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeIANA))
+	// set length
+	binary.BigEndian.PutUint16(b[2:4], uint16(optlen))
+	// set IAID
+	binary.BigEndian.PutUint32(b[4:8], o.IAID)
+	// set T1
+	binary.BigEndian.PutUint32(b[8:12], uint32(o.T1))
+	// set T2
+	binary.BigEndian.PutUint32(b[12:16], uint32(o.T2))
+	if len(o.Options) > 0 {
+		optMarshal, err := o.Marshal()
+		if err != nil {
+			return nil, err
+		}
+		b = append(b, optMarshal...)
+	}
+	return b, nil
+}
+
 // HasOption returns Option if this IA_NA option has OptionType t as option or
 // nil otherwise
 func (o OptionIANA) HasOption(t OptionType) Option {
@@ -213,6 +242,11 @@ func (o OptionIANA) HasOption(t OptionType) Option {
 		}
 	}
 	return nil
+}
+
+// AddOption adds given Option to slice of Options
+func (o *OptionIANA) AddOption(opt Option) {
+	o.Options = append(o.Options, opt)
 }
 
 // OptionIAAddress implements the IA Address option as described at

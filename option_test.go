@@ -160,6 +160,85 @@ func TestOptionServerID(t *testing.T) {
 	}
 }
 
+func TestOptionIANA(t *testing.T) {
+	var opt *OptionIANA
+
+	// fixture of an IA_NA option containing no other options
+	fixtbyte := []byte{0, 3, 0, 12, 0, 250, 153, 31, 0, 0, 1, 44, 0, 0, 1, 194}
+	if list, err := ParseOptions(fixtbyte); err != nil {
+		t.Errorf("could not parse fixture: %s", err)
+	} else if len(list) != 1 {
+		t.Errorf("expected exactly 1 option, got %d", len(list))
+	} else {
+		opt = list[0].(*OptionIANA)
+	}
+
+	// check contents of Option
+	if opt.Type() != OptionTypeIANA {
+		t.Errorf("unexpected type: %s", opt.Type())
+	}
+	// TODO: check IAID
+	if opt.T1 != 300 {
+		t.Errorf("expected T1 300, got %d", opt.T1)
+	}
+	if opt.T2 != 450 {
+		t.Errorf("expected T2 450, got %d", opt.T2)
+	}
+
+	// test matching output for String()
+	fixtstr := "IA_NA IAID:16423199 T1:300 T2:450"
+	if fixtstr != opt.String() {
+		t.Errorf("unexpected String() output: %s", opt.String())
+	}
+
+	// test if marshalled bytes match fixture
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling IANA: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled IANA didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// recreate same OptionIANA and see if its marshal matches fixture
+	opt = &OptionIANA{
+		OptionBase: &OptionBase{
+			OptionType: OptionTypeIANA,
+		},
+		IAID: 16423199,
+		T1:   300,
+		T2:   450,
+	}
+
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling IANA: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled IANA didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// redo all checks with an IAAddress option in the IANA option
+	fixtbyte = []byte{0, 3, 0, 40, 0, 250, 153, 31, 0, 0, 1, 44, 0, 0, 1, 194, 0, 5, 0, 24, 253, 212, 71, 50, 21, 217, 234, 106, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 14, 16, 0, 0, 28, 32}
+	if list, err := ParseOptions(fixtbyte); err != nil {
+		t.Errorf("could not parse fixture: %s", err)
+	} else if len(list) != 1 {
+		t.Errorf("expected exactly 1 option, got %d", len(list))
+	} else {
+		opt = list[0].(*OptionIANA)
+	}
+
+	// check for 1 IAAddress option within the option
+	if len(opt.Options) != 1 {
+		t.Errorf("expected 1 option, got %d", len(opt.Options))
+	}
+	// check type of option
+	if opt.Options[0].Type() != OptionTypeIAAddress {
+		t.Errorf("expected OptionTypeIAAddress, got %s", opt.Options[0].Type())
+	}
+
+	// recreate same OptionIANA and see if its marshal matches fixture
+	// TODO: something about looping over the Options and them being nll pointers
+	// throws a stack overflow
+	// fix this
+}
+
 func TestOptionIAAddress(t *testing.T) {
 	var opt *OptionIAAddress
 
@@ -182,10 +261,10 @@ func TestOptionIAAddress(t *testing.T) {
 		t.Errorf("expected address %s, got %s", fixtaddr, opt.Address)
 	}
 	if opt.PreferredLifetime != 3600 {
-		t.Errorf("expected preferred lifetime 0, got %d", opt.PreferredLifetime)
+		t.Errorf("expected preferred lifetime 3600, got %d", opt.PreferredLifetime)
 	}
 	if opt.ValidLifetime != 7200 {
-		t.Errorf("expected valid lifetime 0, got %d", opt.ValidLifetime)
+		t.Errorf("expected valid lifetime 7200, got %d", opt.ValidLifetime)
 	}
 
 	// test matching output for String()
