@@ -138,7 +138,6 @@ func (o OptionClientID) Marshal() ([]byte, error) {
 	b := make([]byte, lgth)
 	// set type
 	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeClientID))
-	//b[0] = uint8(OptionTypeClientID)
 	// length depends on length of DUID
 	duid, err := o.DUID.Marshal()
 	if err != nil {
@@ -175,7 +174,6 @@ func (o OptionServerID) Marshal() ([]byte, error) {
 	b := make([]byte, lgth)
 	// set type
 	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeServerID))
-	//b[0] = uint8(OptionTypeClientID)
 	// length depends on length of DUID
 	duid, err := o.DUID.Marshal()
 	if err != nil {
@@ -229,6 +227,33 @@ type OptionIAAddress struct {
 
 func (o OptionIAAddress) String() string {
 	return fmt.Sprintf("IA_ADDR %s pltime:%d vltime:%d", o.Address, o.PreferredLifetime, o.ValidLifetime)
+}
+
+// Type returns OptionTypeIAAddress
+func (o OptionIAAddress) Type() OptionType {
+	return OptionTypeIAAddress
+}
+
+// Marshal returns byte slice representing this OptionIAAddress
+func (o OptionIAAddress) Marshal() ([]byte, error) {
+	// prepare byte slice of appropriate length
+	// address, preferred and valid time and optional options are appended later
+	b := make([]byte, 4)
+	// set type
+	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeIAAddress))
+	// set length
+	// for now this length is fixed, since options for IA_Address options are
+	// not implemented yet
+	binary.BigEndian.PutUint16(b[2:4], uint16(24))
+	// set address
+	b = append(b, o.Address...)
+	t := make([]byte, 8)
+	// set preferred time
+	binary.BigEndian.PutUint32(t[0:4], uint32(o.PreferredLifetime))
+	// set valid time
+	binary.BigEndian.PutUint32(t[4:8], uint32(o.ValidLifetime))
+	b = append(b, t...)
+	return b, nil
 }
 
 // OptionOptionRequest implements the Option Request option as described at

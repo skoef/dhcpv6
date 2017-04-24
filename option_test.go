@@ -159,3 +159,61 @@ func TestOptionServerID(t *testing.T) {
 		t.Errorf("marshalled ServerID didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 }
+
+func TestOptionIAAddress(t *testing.T) {
+	var opt *OptionIAAddress
+
+	fixtbyte := []byte{0, 5, 0, 24, 253, 212, 71, 50, 21, 217, 234, 106, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 14, 16, 0, 0, 28, 32}
+	// test decoding bytes to []Option
+	if list, err := ParseOptions(fixtbyte); err != nil {
+		t.Errorf("could not parse fixture: %s", err)
+	} else if len(list) != 1 {
+		t.Errorf("expected exactly 1 option, got %d", len(list))
+	} else {
+		opt = list[0].(*OptionIAAddress)
+	}
+
+	// check contents of Option
+	if opt.Type() != OptionTypeIAAddress {
+		t.Errorf("unexpected type: %s", opt.Type())
+	}
+	fixtaddr := net.ParseIP("fdd4:4732:15d9:ea6a::1000")
+	if !fixtaddr.Equal(opt.Address) {
+		t.Errorf("expected address %s, got %s", fixtaddr, opt.Address)
+	}
+	if opt.PreferredLifetime != 3600 {
+		t.Errorf("expected preferred lifetime 0, got %d", opt.PreferredLifetime)
+	}
+	if opt.ValidLifetime != 7200 {
+		t.Errorf("expected valid lifetime 0, got %d", opt.ValidLifetime)
+	}
+
+	// test matching output for String()
+	fixtstr := "IA_ADDR fdd4:4732:15d9:ea6a::1000 pltime:3600 vltime:7200"
+	if fixtstr != opt.String() {
+		t.Errorf("unexpected String() output: %s", opt.String())
+	}
+
+	// test if marshalled bytes match fixture
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling IAAddress: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled IAAddress didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// create same OptionClientID and see if its marshal matches fixture
+	opt = &OptionIAAddress{
+		OptionBase: &OptionBase{
+			OptionType: OptionTypeIAAddress,
+		},
+		Address:           fixtaddr,
+		PreferredLifetime: 3600,
+		ValidLifetime:     7200,
+	}
+
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling IAAddress: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled IAAddress didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+}
