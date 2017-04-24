@@ -94,7 +94,7 @@ func (t OptionType) String() string {
 			return "Unknown"
 		}
 	}
-	return fmt.Sprintf("option type %s (%d)", name(), t)
+	return fmt.Sprintf("%s (%d)", name(), t)
 }
 
 // base struct to be embedded by all DHCPv6 options
@@ -110,6 +110,8 @@ func (o optionBase) Type() OptionType {
 type Option interface {
 	String() string
 	Type() OptionType
+	// uncomment once all Options have Marshal() implemented
+	// Marshal() ([]byte, error)
 }
 
 // OptionClientID implements the Client Identifier option as described at
@@ -123,6 +125,32 @@ func (o OptionClientID) String() string {
 	return fmt.Sprintf("client-ID %s", o.DUID)
 }
 
+// Type returns OptionTypeClientID
+func (o OptionClientID) Type() OptionType {
+	return OptionTypeClientID
+}
+
+// Marshal returns byte slice representing this OptionClientID
+func (o OptionClientID) Marshal() ([]byte, error) {
+	// prepare byte slice of appropriate length
+	// DUID will be appended later
+	lgth := 4 // type (2 bytes), length (2 bytes)
+	b := make([]byte, lgth)
+	// set type
+	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeClientID))
+	//b[0] = uint8(OptionTypeClientID)
+	// length depends on length of DUID
+	duid, err := o.DUID.Marshal()
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal DUID: %s", err)
+	}
+	// set length
+	binary.BigEndian.PutUint16(b[2:4], uint16(len(duid)))
+	// append DUID bytes
+	b = append(b, duid...)
+	return b, nil
+}
+
 // OptionServerID implements the Server Identifier option as described at
 // https://tools.ietf.org/html/rfc3315#section-22.3
 type OptionServerID struct {
@@ -132,6 +160,32 @@ type OptionServerID struct {
 
 func (o OptionServerID) String() string {
 	return fmt.Sprintf("server-ID %s", o.DUID)
+}
+
+// Type returns OptionTypeServerID
+func (o OptionServerID) Type() OptionType {
+	return OptionTypeServerID
+}
+
+// Marshal returns byte slice representing this OptionServerID
+func (o OptionServerID) Marshal() ([]byte, error) {
+	// prepare byte slice of appropriate length
+	// DUID will be appended later
+	lgth := 4 // type (2 bytes), length (2 bytes)
+	b := make([]byte, lgth)
+	// set type
+	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeServerID))
+	//b[0] = uint8(OptionTypeClientID)
+	// length depends on length of DUID
+	duid, err := o.DUID.Marshal()
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal DUID: %s", err)
+	}
+	// set length
+	binary.BigEndian.PutUint16(b[2:4], uint16(len(duid)))
+	// append DUID bytes
+	b = append(b, duid...)
+	return b, nil
 }
 
 // OptionIANA implements the Identity Association for Non-temporary Addresses

@@ -89,7 +89,7 @@ func TestDuidLLT(t *testing.T) {
 		t.Errorf("marshalled DUID didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
-	// recreate same struct and see if it's marshal matches fixture
+	// recreate same struct and see if its marshal matches fixture
 	duidllt = &DUIDLLT{
 		DUIDBase: &DUIDBase{
 			DUIDType: DUIDTypeLLT,
