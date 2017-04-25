@@ -522,7 +522,6 @@ func (o OptionRapidCommit) String() string {
 
 // Len returns the length in bytes of OptionRapidCommit's body
 func (o OptionRapidCommit) Len() uint16 {
-	// TODO: implement
 	return 0
 }
 
@@ -533,8 +532,13 @@ func (o OptionRapidCommit) Type() OptionType {
 
 // Marshal returns byte slice representing this OptionRapidCommit
 func (o OptionRapidCommit) Marshal() ([]byte, error) {
-	// TODO: implement
-	return nil, nil
+	// prepare byte slice of appropriate length
+	b := make([]byte, 4)
+	// set type
+	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeRapidCommit))
+	// setting length is not necessary, it's 0 already
+
+	return b, nil
 }
 
 // ParseOptions takes DHCPv6 option bytes and parses every handled option,

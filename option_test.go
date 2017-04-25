@@ -495,3 +495,49 @@ func TestStatusCodeString(t *testing.T) {
 		}
 	}
 }
+
+func TestOptionRapidCommit(t *testing.T) {
+	var opt *OptionRapidCommit
+
+	fixtbyte := []byte{0, 14, 0, 0}
+	// test decoding bytes to []Option
+	if list, err := ParseOptions(fixtbyte); err != nil {
+		t.Errorf("could not parse fixture: %s", err)
+	} else if len(list) != 1 {
+		t.Errorf("expected exactly 1 option, got %d", len(list))
+	} else {
+		opt = list[0].(*OptionRapidCommit)
+	}
+
+	// check contents of Option
+	if opt.Type() != OptionTypeRapidCommit {
+		t.Errorf("unexpected type: %s", opt.Type())
+	}
+
+	// check body length
+	fixtlen := uint16(0)
+	if opt.Len() != fixtlen {
+		t.Errorf("expected length %d, got %d", fixtlen, opt.Len())
+	}
+
+	// test matching output for String()
+	fixtstr := "rapid-commit"
+	if fixtstr != opt.String() {
+		t.Errorf("unexpected String() output: %s", opt.String())
+	}
+
+	// test if marshalled bytes match fixture
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionRapidCommit: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionRapidCommit didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// create same struct and see if its marshal matches fixture
+	opt = &OptionRapidCommit{}
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionRapidCommit: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionRapidCommit didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+}
