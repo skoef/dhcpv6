@@ -69,6 +69,12 @@ func TestOptionClientID(t *testing.T) {
 		t.Errorf("unexpected DUID type: %s", opt.DUID.Type())
 	}
 
+	// check body length
+	fixtlen := uint16(14)
+	if opt.Len() != fixtlen {
+		t.Errorf("expected length %d, got %d", fixtlen, opt.Len())
+	}
+
 	// test matching output for String()
 	fixtstr := "client-ID hwaddr/time type 1 time 500000000 aa:bb:cc:dd:ee:ff"
 	if fixtstr != opt.String() {
@@ -122,6 +128,12 @@ func TestOptionServerID(t *testing.T) {
 	// for now, just check the type of the DUID
 	if opt.DUID.Type() != DUIDTypeLLT {
 		t.Errorf("unexpected DUID type: %s", opt.DUID.Type())
+	}
+
+	// check body length
+	fixtlen := uint16(14)
+	if opt.Len() != fixtlen {
+		t.Errorf("expected length %d, got %d", fixtlen, opt.Len())
 	}
 
 	// test matching output for String()
@@ -178,6 +190,12 @@ func TestOptionIANA(t *testing.T) {
 	}
 	if opt.T2 != 450 {
 		t.Errorf("expected T2 450, got %d", opt.T2)
+	}
+
+	// check body length
+	fixtlen := uint16(12)
+	if opt.Len() != fixtlen {
+		t.Errorf("expected length %d, got %d", fixtlen, opt.Len())
 	}
 
 	// test matching output for String()
@@ -295,6 +313,12 @@ func TestOptionIAAddress(t *testing.T) {
 		t.Errorf("expected valid lifetime 7200, got %d", opt.ValidLifetime)
 	}
 
+	// check body length
+	fixtlen := uint16(24)
+	if opt.Len() != fixtlen {
+		t.Errorf("expected length %d, got %d", fixtlen, opt.Len())
+	}
+
 	// test matching output for String()
 	fixtstr := "IA_ADDR fdd4:4732:15d9:ea6a::1000 pltime:3600 vltime:7200"
 	if fixtstr != opt.String() {
@@ -349,6 +373,12 @@ func TestOptionOptionRequest(t *testing.T) {
 		t.Errorf("OptionRequest shouldn't have OptionTypeClientID")
 	}
 
+	// check body length
+	fixtlen := uint16(4)
+	if opt.Len() != fixtlen {
+		t.Errorf("expected length %d, got %d", fixtlen, opt.Len())
+	}
+
 	// test matching output for String()
 	fixtstr := "option-request DNS Server (23) DNS Search List (24)"
 	if fixtstr != opt.String() {
@@ -400,6 +430,12 @@ func TestOptionElapsedTime(t *testing.T) {
 		t.Errorf("expected %s, got %s", fixttime, opt.ElapsedTime)
 	}
 
+	// check body length
+	fixtlen := uint16(2)
+	if opt.Len() != fixtlen {
+		t.Errorf("expected length %d, got %d", fixtlen, opt.Len())
+	}
+
 	// test matching output for String()
 	fixtstr := "elapsed-time 100ms"
 	if fixtstr != opt.String() {
@@ -448,6 +484,12 @@ func TestOptionStatusCode(t *testing.T) {
 	fixtmsg := "Some of the addresses are not on link."
 	if opt.Message != fixtmsg {
 		t.Errorf("expected status message %s, got %s", fixtmsg, opt.Message)
+	}
+
+	// check body length
+	fixtlen := uint16(40)
+	if opt.Len() != fixtlen {
+		t.Errorf("expected length %d, got %d", fixtlen, opt.Len())
 	}
 
 	// test matching output for String()
