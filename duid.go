@@ -39,6 +39,7 @@ const (
 
 type DUID interface {
 	String() string
+	Len() uint16
 	Type() DUIDType
 	Marshal() ([]byte, error)
 }
@@ -65,6 +66,10 @@ func (d DUIDLLT) String() string {
 
 	output += fmt.Sprintf(" %v", d.LinkLayerAddress)
 	return output
+}
+
+func (d DUIDLLT) Len() uint16 {
+	return uint16(4 + 4 + len(d.LinkLayerAddress))
 }
 
 // Type returns DUIDTypeLLT
@@ -107,6 +112,10 @@ type DUIDLL struct {
 
 func (d DUIDLL) String() string {
 	return fmt.Sprintf("hwaddr type %d %v", d.DUIDType, d.LinkLayerAddress)
+}
+
+func (d DUIDLL) Len() uint16 {
+	return uint16(4 + len(d.LinkLayerAddress))
 }
 
 // Type returns DUIDTypeLL

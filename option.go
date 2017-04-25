@@ -97,32 +97,63 @@ func (t OptionType) String() string {
 	return fmt.Sprintf("%s (%d)", name(), t)
 }
 
-// base struct to be embedded by all DHCPv6 options
-type optionBase struct {
-	OptionType OptionType
-}
-
-func (o optionBase) Type() OptionType {
-	return o.OptionType
-}
-
 // Option -- interface to build various DHCPv6 options on
 type Option interface {
 	String() string
+	Len() uint16
 	Type() OptionType
-	// uncomment once all Options have Marshal() implemented
-	// Marshal() ([]byte, error)
+	Marshal() ([]byte, error)
+}
+
+// Options is a type wrapper for a slice of Options
+type Options []Option
+
+// Marshal is a helper function of Options and returns marshalled results
+// for all Options or error when there is one
+func (o Options) Marshal() ([]byte, error) {
+	b := []byte{}
+	// loop over all options and append bytes to b
+	// or abort when it throws an error
+	for _, opt := range o {
+		ob, err := opt.Marshal()
+		if err != nil {
+			return nil, err
+		}
+
+		b = append(b, ob...)
+	}
+
+	return b, nil
+}
+
+// Len returns combined length in bytes for all Options in slice
+// this includes the option header (containing type and length)
+func (o Options) Len() uint16 {
+	l := uint16(0)
+	// loop over all options and add length to l
+	for _, opt := range o {
+		// since this function is mostly used to calculate byte length for byte
+		// slices containing these options, the 4 byte option header has to be
+		// calculated as well for each option
+		l += opt.Len() + 4
+	}
+
+	return l
 }
 
 // OptionClientID implements the Client Identifier option as described at
 // https://tools.ietf.org/html/rfc3315#section-22.2
 type OptionClientID struct {
-	*optionBase
 	DUID DUID
 }
 
 func (o OptionClientID) String() string {
 	return fmt.Sprintf("client-ID %s", o.DUID)
+}
+
+// Len returns the length in bytes of OptionClientID's body
+func (o OptionClientID) Len() uint16 {
+	return o.DUID.Len()
 }
 
 // Type returns OptionTypeClientID
@@ -137,27 +168,31 @@ func (o OptionClientID) Marshal() ([]byte, error) {
 	b := make([]byte, 4) // type (2 bytes), length (2 bytes)
 	// set type
 	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeClientID))
-	// length depends on length of DUID
+	// set length
+	binary.BigEndian.PutUint16(b[2:4], o.Len())
+	// append DUID bytes
 	duid, err := o.DUID.Marshal()
 	if err != nil {
 		return nil, fmt.Errorf("could not marshal DUID: %s", err)
 	}
-	// set length
-	binary.BigEndian.PutUint16(b[2:4], uint16(len(duid)))
-	// append DUID bytes
 	b = append(b, duid...)
+
 	return b, nil
 }
 
 // OptionServerID implements the Server Identifier option as described at
 // https://tools.ietf.org/html/rfc3315#section-22.3
 type OptionServerID struct {
-	*optionBase
 	DUID DUID
 }
 
 func (o OptionServerID) String() string {
 	return fmt.Sprintf("server-ID %s", o.DUID)
+}
+
+// Len returns the length in bytes of OptionServerID's body
+func (o OptionServerID) Len() uint16 {
+	return o.DUID.Len()
 }
 
 // Type returns OptionTypeServerID
@@ -172,22 +207,21 @@ func (o OptionServerID) Marshal() ([]byte, error) {
 	b := make([]byte, 4) // type (2 bytes), length (2 bytes)
 	// set type
 	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeServerID))
-	// length depends on length of DUID
+	// set length
+	binary.BigEndian.PutUint16(b[2:4], o.Len())
+	// append DUID bytes
 	duid, err := o.DUID.Marshal()
 	if err != nil {
 		return nil, fmt.Errorf("could not marshal DUID: %s", err)
 	}
-	// set length
-	binary.BigEndian.PutUint16(b[2:4], uint16(len(duid)))
-	// append DUID bytes
 	b = append(b, duid...)
+
 	return b, nil
 }
 
 // OptionIANA implements the Identity Association for Non-temporary Addresses
 // option as described at https://tools.ietf.org/html/rfc3315#section-22.4
 type OptionIANA struct {
-	*optionBase
 	IAID    uint32
 	T1      time.Duration // delay before Renew
 	T2      time.Duration // delay before Rebind
@@ -202,21 +236,29 @@ func (o OptionIANA) String() string {
 	return output
 }
 
+// Len returns the length in bytes of OptionIANA's body
+func (o OptionIANA) Len() uint16 {
+	// iaid (4 bytes)
+	// t1 (4 bytes)
+	// t2 (4 bytes)
+	// any additional options' length
+	return 12 + o.Options.Len()
+}
+
 // Type returns OptionIANA
 func (o OptionIANA) Type() OptionType {
 	return OptionTypeIANA
 }
 
 // Marshal returns byte slice representing this OptionIANA
-func (o OptionIANA) Marshal() ([]byte, error) {
+func (o *OptionIANA) Marshal() ([]byte, error) {
 	// prepare byte slice of appropriate length
 	// any options will be appended later
-	optlen := 12
-	b := make([]byte, 4+optlen) // type + length + iaid + t1 + t2
+	b := make([]byte, 16)
 	// set type
 	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeIANA))
 	// set length
-	binary.BigEndian.PutUint16(b[2:4], uint16(optlen))
+	binary.BigEndian.PutUint16(b[2:4], o.Len())
 	// set IAID
 	binary.BigEndian.PutUint32(b[4:8], o.IAID)
 	// set T1
@@ -224,7 +266,7 @@ func (o OptionIANA) Marshal() ([]byte, error) {
 	// set T2
 	binary.BigEndian.PutUint32(b[12:16], uint32(o.T2))
 	if len(o.Options) > 0 {
-		optMarshal, err := o.Marshal()
+		optMarshal, err := o.Options.Marshal()
 		if err != nil {
 			return nil, err
 		}
@@ -252,7 +294,6 @@ func (o *OptionIANA) AddOption(opt Option) {
 // OptionIAAddress implements the IA Address option as described at
 // https://tools.ietf.org/html/rfc3315#section-22.6
 type OptionIAAddress struct {
-	*optionBase
 	Address           net.IP
 	PreferredLifetime time.Duration
 	ValidLifetime     time.Duration
@@ -268,6 +309,15 @@ func (o OptionIAAddress) Type() OptionType {
 	return OptionTypeIAAddress
 }
 
+// Len returns the length in bytes of OptionIAAddress's body
+func (o OptionIAAddress) Len() uint16 {
+	// preferred lifetime (4 bytes)
+	// valid lifetime (4 bytes)
+	// address (16 bytes)
+	// TODO: any additional options' length
+	return 24
+}
+
 // Marshal returns byte slice representing this OptionIAAddress
 func (o OptionIAAddress) Marshal() ([]byte, error) {
 	// prepare byte slice of appropriate length
@@ -278,7 +328,7 @@ func (o OptionIAAddress) Marshal() ([]byte, error) {
 	// set length
 	// for now this length is fixed, since options for IA_Address options are
 	// not implemented yet
-	binary.BigEndian.PutUint16(b[2:4], uint16(24))
+	binary.BigEndian.PutUint16(b[2:4], o.Len())
 	// set address
 	b = append(b, o.Address...)
 	t := make([]byte, 8)
@@ -293,7 +343,6 @@ func (o OptionIAAddress) Marshal() ([]byte, error) {
 // OptionOptionRequest implements the Option Request option as described at
 // https://tools.ietf.org/html/rfc3315#section-22.7
 type OptionOptionRequest struct {
-	*optionBase
 	Options []OptionType
 }
 
@@ -303,6 +352,23 @@ func (o OptionOptionRequest) String() string {
 		output += fmt.Sprintf(" %s", opt)
 	}
 	return output
+}
+
+// Len returns the length in bytes of OptionOptionRequest's body
+func (o OptionOptionRequest) Len() uint16 {
+	// TODO: implement
+	return 0
+}
+
+// Type returns OptionTypeOptionRequest
+func (o OptionOptionRequest) Type() OptionType {
+	return OptionTypeOptionRequest
+}
+
+// Marshal returns byte slice representing this OptionOptionRequest
+func (o OptionOptionRequest) Marshal() ([]byte, error) {
+	// TODO: implement
+	return nil, nil
 }
 
 // helper function to parse the DHCPv6 options requested in this specific option
@@ -324,12 +390,28 @@ func (o *OptionOptionRequest) parseOptions(data []byte) error {
 // OptionElapsedTime implements the Elapsed Time option as described at
 // https://tools.ietf.org/html/rfc3315#section-22.9
 type OptionElapsedTime struct {
-	*optionBase
 	ElapsedTime time.Duration
 }
 
 func (o OptionElapsedTime) String() string {
 	return fmt.Sprintf("elapsed-time %v", o.ElapsedTime)
+}
+
+// Len returns the length in bytes of OptionElapsedTime's body
+func (o OptionElapsedTime) Len() uint16 {
+	// TODO: implement
+	return 0
+}
+
+// Type returns OptionTypeElapsedTime
+func (o OptionElapsedTime) Type() OptionType {
+	return OptionTypeElapsedTime
+}
+
+// Marshal returns byte slice representing this OptionElapsedTime
+func (o OptionElapsedTime) Marshal() ([]byte, error) {
+	// TODO: implement
+	return nil, nil
 }
 
 type StatusCode uint16
@@ -370,7 +452,6 @@ func (s StatusCode) String() string {
 // OptionStatusCode implements the Status Code option as described at
 // https://tools.ietf.org/html/rfc3315#section-22.13
 type OptionStatusCode struct {
-	*optionBase
 	Code    StatusCode
 	Message string
 }
@@ -379,16 +460,48 @@ func (o OptionStatusCode) String() string {
 	return fmt.Sprintf("status-code %s: %s", o.Code, o.Message)
 }
 
+// Len returns the length in bytes of OptionStatusCode's body
+func (o OptionStatusCode) Len() uint16 {
+	// TODO: implement
+	return 0
+}
+
+// Type returns OptionTypeStatusCode
+func (o OptionStatusCode) Type() OptionType {
+	return OptionTypeStatusCode
+}
+
+// Marshal returns byte slice representing this OptionStatusCode
+func (o OptionStatusCode) Marshal() ([]byte, error) {
+	// TODO: implement
+	return nil, nil
+}
+
 // OptionRapidCommit implements the Rapid Commit option as described at
 // https://tools.ietf.org/html/rfc3315#section-22.14
 // this option acts basically as a flag for the message carrying it
 // and has no further contents
-type OptionRapidCommit struct {
-	*optionBase
-}
+type OptionRapidCommit struct{}
 
 func (o OptionRapidCommit) String() string {
 	return "rapid-commit"
+}
+
+// Len returns the length in bytes of OptionRapidCommit's body
+func (o OptionRapidCommit) Len() uint16 {
+	// TODO: implement
+	return 0
+}
+
+// Type returns OptionTypeRapidCommit
+func (o OptionRapidCommit) Type() OptionType {
+	return OptionTypeRapidCommit
+}
+
+// Marshal returns byte slice representing this OptionRapidCommit
+func (o OptionRapidCommit) Marshal() ([]byte, error) {
+	// TODO: implement
+	return nil, nil
 }
 
 // ParseOptions takes DHCPv6 option bytes and parses every handled option,
@@ -416,22 +529,14 @@ func ParseOptions(data []byte) (Options, error) {
 		var currentOption Option
 		switch optionType {
 		case OptionTypeClientID:
-			currentOption = &OptionClientID{
-				optionBase: &optionBase{
-					OptionType: optionType,
-				},
-			}
+			currentOption = &OptionClientID{}
 			duid, err := DecodeDUID(data[4 : 4+optionLen])
 			if err != nil {
 				return list, errOptionTooShort
 			}
 			currentOption.(*OptionClientID).DUID = duid
 		case OptionTypeServerID:
-			currentOption = &OptionServerID{
-				optionBase: &optionBase{
-					OptionType: optionType,
-				},
-			}
+			currentOption = &OptionServerID{}
 			duid, err := DecodeDUID(data[4 : 4+optionLen])
 			if err != nil {
 				return list, errOptionTooShort
@@ -441,11 +546,7 @@ func ParseOptions(data []byte) (Options, error) {
 			if optionLen < 12 {
 				return list, errOptionTooShort
 			}
-			currentOption = &OptionIANA{
-				optionBase: &optionBase{
-					OptionType: optionType,
-				},
-			}
+			currentOption = &OptionIANA{}
 			currentOption.(*OptionIANA).IAID = binary.BigEndian.Uint32(data[4:8])
 			currentOption.(*OptionIANA).T1 = time.Duration(binary.BigEndian.Uint32(data[8:12]))
 			currentOption.(*OptionIANA).T2 = time.Duration(binary.BigEndian.Uint32(data[12:16]))
@@ -461,19 +562,12 @@ func ParseOptions(data []byte) (Options, error) {
 				return list, errOptionTooShort
 			}
 			currentOption = &OptionIAAddress{
-				optionBase: &optionBase{
-					OptionType: optionType,
-				},
 				Address:           data[4:20],
 				PreferredLifetime: time.Duration(binary.BigEndian.Uint32(data[20:24])),
 				ValidLifetime:     time.Duration(binary.BigEndian.Uint32(data[24:28])),
 			}
 		case OptionTypeOptionRequest:
-			currentOption = &OptionOptionRequest{
-				optionBase: &optionBase{
-					OptionType: optionType,
-				},
-			}
+			currentOption = &OptionOptionRequest{}
 			if optionLen > 0 {
 				currentOption.(*OptionOptionRequest).parseOptions(data[4 : 4+optionLen])
 			}
@@ -482,9 +576,6 @@ func ParseOptions(data []byte) (Options, error) {
 				return list, errOptionTooShort
 			}
 			currentOption = &OptionElapsedTime{
-				optionBase: &optionBase{
-					OptionType: optionType,
-				},
 				// elapsed time is expressed in hundredths of a second
 				// hence the 10 * millisecond
 				ElapsedTime: (time.Duration(binary.BigEndian.Uint16(data[4:4+optionLen])) * time.Millisecond * 10),
@@ -495,9 +586,6 @@ func ParseOptions(data []byte) (Options, error) {
 			}
 			fmt.Printf("status code bytes: %v\n", data)
 			currentOption = &OptionStatusCode{
-				optionBase: &optionBase{
-					OptionType: optionType,
-				},
 				Code:    StatusCode(binary.BigEndian.Uint16(data[4:6])),
 				Message: string(data[6 : optionLen+4]),
 			}
@@ -506,11 +594,7 @@ func ParseOptions(data []byte) (Options, error) {
 				return list, errOptionTooLong
 			}
 
-			currentOption = &OptionRapidCommit{
-				optionBase: &optionBase{
-					OptionType: optionType,
-				},
-			}
+			currentOption = &OptionRapidCommit{}
 		default:
 			fmt.Printf("unhandled option type: %s\n", optionType)
 		}

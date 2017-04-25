@@ -66,8 +66,6 @@ func (t MessageType) String() string {
 	return fmt.Sprintf("message type %s (%d)", name(), t)
 }
 
-type Options []Option
-
 type Message struct {
 	MessageType MessageType
 	Xid         uint32

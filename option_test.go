@@ -83,9 +83,6 @@ func TestOptionClientID(t *testing.T) {
 
 	// create same OptionClientID and see if its marshal matches fixture
 	opt = &OptionClientID{
-		OptionBase: &OptionBase{
-			OptionType: OptionTypeClientID,
-		},
 		DUID: &DUIDLLT{
 			DUIDBase: &DUIDBase{
 				DUIDType: DUIDTypeLLT,
@@ -141,9 +138,6 @@ func TestOptionServerID(t *testing.T) {
 
 	// create same OptionClientID and see if its marshal matches fixture
 	opt = &OptionServerID{
-		OptionBase: &OptionBase{
-			OptionType: OptionTypeServerID,
-		},
 		DUID: &DUIDLLT{
 			DUIDBase: &DUIDBase{
 				DUIDType: DUIDTypeLLT,
@@ -200,9 +194,6 @@ func TestOptionIANA(t *testing.T) {
 
 	// recreate same OptionIANA and see if its marshal matches fixture
 	opt = &OptionIANA{
-		OptionBase: &OptionBase{
-			OptionType: OptionTypeIANA,
-		},
 		IAID: 16423199,
 		T1:   300,
 		T2:   450,
@@ -234,9 +225,45 @@ func TestOptionIANA(t *testing.T) {
 	}
 
 	// recreate same OptionIANA and see if its marshal matches fixture
-	// TODO: something about looping over the Options and them being nll pointers
-	// throws a stack overflow
-	// fix this
+	iaaddr := &OptionIAAddress{
+		Address:           net.ParseIP("fdd4:4732:15d9:ea6a::1000"),
+		PreferredLifetime: 3600,
+		ValidLifetime:     7200,
+	}
+
+	opt = &OptionIANA{
+		IAID:    16423199,
+		T1:      300,
+		T2:      450,
+		Options: Options{iaaddr},
+	}
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling IANA: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled IANA didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// do it again but now use the AddOption function of OptionIANA
+	opt = &OptionIANA{
+		IAID: 16423199,
+		T1:   300,
+		T2:   450,
+	}
+	opt.AddOption(iaaddr)
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling IANA: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled IANA didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// check if opt now has an IAAddress option
+	if opt.HasOption(OptionTypeIAAddress) == nil {
+		t.Errorf("IANA should have option OptionTypeIAAddress")
+	}
+	// check if opt has random other option
+	if opt.HasOption(OptionTypeRapidCommit) != nil {
+		t.Errorf("IANA shouldn't have option OptionTypeRapidCommit")
+	}
 }
 
 func TestOptionIAAddress(t *testing.T) {
@@ -282,9 +309,6 @@ func TestOptionIAAddress(t *testing.T) {
 
 	// create same OptionClientID and see if its marshal matches fixture
 	opt = &OptionIAAddress{
-		OptionBase: &OptionBase{
-			OptionType: OptionTypeIAAddress,
-		},
 		Address:           fixtaddr,
 		PreferredLifetime: 3600,
 		ValidLifetime:     7200,
