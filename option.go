@@ -486,8 +486,7 @@ func (o OptionStatusCode) String() string {
 
 // Len returns the length in bytes of OptionStatusCode's body
 func (o OptionStatusCode) Len() uint16 {
-	// TODO: implement
-	return 0
+	return uint16(2 + len(o.Message))
 }
 
 // Type returns OptionTypeStatusCode
@@ -497,8 +496,18 @@ func (o OptionStatusCode) Type() OptionType {
 
 // Marshal returns byte slice representing this OptionStatusCode
 func (o OptionStatusCode) Marshal() ([]byte, error) {
-	// TODO: implement
-	return nil, nil
+	// prepare byte slice of appropriate length
+	b := make([]byte, 6)
+	// set type
+	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeStatusCode))
+	// set length
+	binary.BigEndian.PutUint16(b[2:4], o.Len())
+	// set StatusCode
+	binary.BigEndian.PutUint16(b[4:6], uint16(o.Code))
+	// set message
+	b = append(b, []byte(o.Message)...)
+
+	return b, nil
 }
 
 // OptionRapidCommit implements the Rapid Commit option as described at
@@ -608,7 +617,6 @@ func ParseOptions(data []byte) (Options, error) {
 			if optionLen < 2 {
 				return list, errOptionTooShort
 			}
-			fmt.Printf("status code bytes: %v\n", data)
 			currentOption = &OptionStatusCode{
 				Code:    StatusCode(binary.BigEndian.Uint16(data[4:6])),
 				Message: string(data[6 : optionLen+4]),

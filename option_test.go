@@ -2,6 +2,7 @@ package dhcpv6
 
 import (
 	"bytes"
+	"fmt"
 	"net"
 	"strings"
 	"testing"
@@ -420,5 +421,77 @@ func TestOptionElapsedTime(t *testing.T) {
 		t.Errorf("error marshalling OptionElapsedTime: %s", err)
 	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
 		t.Errorf("marshalled OptionElapsedTime didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+}
+
+func TestOptionStatusCode(t *testing.T) {
+	var opt *OptionStatusCode
+
+	fixtbyte := []byte{0, 13, 0, 40, 0, 4, 83, 111, 109, 101, 32, 111, 102, 32, 116, 104, 101, 32, 97, 100, 100, 114, 101, 115, 115, 101, 115, 32, 97, 114, 101, 32, 110, 111, 116, 32, 111, 110, 32, 108, 105, 110, 107, 46}
+	// test decoding bytes to []Option
+	if list, err := ParseOptions(fixtbyte); err != nil {
+		t.Errorf("could not parse fixture: %s", err)
+	} else if len(list) != 1 {
+		t.Errorf("expected exactly 1 option, got %d", len(list))
+	} else {
+		opt = list[0].(*OptionStatusCode)
+	}
+
+	// check contents of Option
+	if opt.Type() != OptionTypeStatusCode {
+		t.Errorf("unexpected type: %s", opt.Type())
+	}
+	fixtcode := StatusCodeNotOnLink
+	if opt.Code != fixtcode {
+		t.Errorf("expected status code %s, got %s", fixtcode, opt.Code)
+	}
+	fixtmsg := "Some of the addresses are not on link."
+	if opt.Message != fixtmsg {
+		t.Errorf("expected status message %s, got %s", fixtmsg, opt.Message)
+	}
+
+	// test matching output for String()
+	fixtstr := fmt.Sprintf("status-code %s: %s", opt.Code, opt.Message)
+	if fixtstr != opt.String() {
+		t.Errorf("unexpected String() output: %s", opt.String())
+	}
+
+	// test if marshalled bytes match fixture
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionStatusCode: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionStatusCode didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// create same struct and see if its marshal matches fixture
+	opt = &OptionStatusCode{
+		Code:    fixtcode,
+		Message: fixtmsg,
+	}
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionStatusCode: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionStatusCode didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+}
+
+func TestStatusCodeString(t *testing.T) {
+	tests := []struct {
+		in  StatusCode
+		out string
+	}{
+		{StatusCodeSuccess, "Success (0)"},
+		{StatusCodeUnspecFail, "UnspecFail (1)"},
+		{StatusCodeNoAddrsAvail, "NoAddrsAvail (2)"},
+		{StatusCodeNoBinding, "NoBinding (3)"},
+		{StatusCodeNotOnLink, "NotOnLink (4)"},
+		{StatusCodeUseMulticast, "UseMulticast (5)"},
+		{255, "Unknown (255)"},
+	}
+
+	for _, test := range tests {
+		if strings.Compare(test.in.String(), test.out) != 0 {
+			t.Errorf("expected %s but got %s", test.out, test.in.String())
+		}
 	}
 }
