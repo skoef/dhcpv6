@@ -416,8 +416,7 @@ func (o OptionElapsedTime) String() string {
 
 // Len returns the length in bytes of OptionElapsedTime's body
 func (o OptionElapsedTime) Len() uint16 {
-	// TODO: implement
-	return 0
+	return 2
 }
 
 // Type returns OptionTypeElapsedTime
@@ -427,8 +426,16 @@ func (o OptionElapsedTime) Type() OptionType {
 
 // Marshal returns byte slice representing this OptionElapsedTime
 func (o OptionElapsedTime) Marshal() ([]byte, error) {
-	// TODO: implement
-	return nil, nil
+	// prepare byte slice of appropriate length
+	b := make([]byte, 4+o.Len())
+	// set type
+	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeElapsedTime))
+	// set length
+	binary.BigEndian.PutUint16(b[2:4], o.Len())
+	// set time (divide by 10 to go from millisecond to hundredths of seconds again)
+	binary.BigEndian.PutUint16(b[4:6], uint16(o.ElapsedTime/time.Millisecond/10))
+
+	return b, nil
 }
 
 type StatusCode uint16
@@ -593,7 +600,7 @@ func ParseOptions(data []byte) (Options, error) {
 				return list, errOptionTooShort
 			}
 			currentOption = &OptionElapsedTime{
-				// elapsed time is expressed in hundredths of a second
+				// RFC3315 describes elapsed time is expressed in hundredths of a second
 				// hence the 10 * millisecond
 				ElapsedTime: (time.Duration(binary.BigEndian.Uint16(data[4:4+optionLen])) * time.Millisecond * 10),
 			}

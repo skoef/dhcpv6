@@ -375,3 +375,50 @@ func TestOptionOptionRequest(t *testing.T) {
 		t.Errorf("marshalled OptionRequest didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 }
+
+func TestOptionElapsedTime(t *testing.T) {
+	// option (option type Elapsed Time (8)): [0 8 0 2 0 0]
+	var opt *OptionElapsedTime
+
+	fixtbyte := []byte{0, 8, 0, 2, 0, 10}
+	// test decoding bytes to []Option
+	if list, err := ParseOptions(fixtbyte); err != nil {
+		t.Errorf("could not parse fixture: %s", err)
+	} else if len(list) != 1 {
+		t.Errorf("expected exactly 1 option, got %d", len(list))
+	} else {
+		opt = list[0].(*OptionElapsedTime)
+	}
+
+	// check contents of Option
+	if opt.Type() != OptionTypeElapsedTime {
+		t.Errorf("unexpected type: %s", opt.Type())
+	}
+	fixttime := (time.Duration(100) * time.Millisecond)
+	if opt.ElapsedTime != fixttime {
+		t.Errorf("expected %s, got %s", fixttime, opt.ElapsedTime)
+	}
+
+	// test matching output for String()
+	fixtstr := "elapsed-time 100ms"
+	if fixtstr != opt.String() {
+		t.Errorf("unexpected String() output: %s", opt.String())
+	}
+
+	// test if marshalled bytes match fixture
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionElapsedTime: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionElapsedTime didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// create same struct and see if its marshal matches fixture
+	opt = &OptionElapsedTime{
+		ElapsedTime: fixttime,
+	}
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionElapsedTime: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionElapsedTime didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+}
