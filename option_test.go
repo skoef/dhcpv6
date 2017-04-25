@@ -51,8 +51,8 @@ func TestOptionClientID(t *testing.T) {
 
 	fixtbyte := []byte{0, 1, 0, 14, 0, 1, 0, 1, 29, 205, 101, 0, 170, 187, 204, 221, 238, 255}
 	// test decoding bytes to []Option
-	if list, err := ParseOptions(fixtbyte); err != nil {
-		t.Errorf("could not parse fixture: %s", err)
+	if list, err := DecodeOptions(fixtbyte); err != nil {
+		t.Errorf("could not decode fixture: %s", err)
 	} else if len(list) != 1 {
 		t.Errorf("expected exactly 1 option, got %d", len(list))
 	} else {
@@ -112,8 +112,8 @@ func TestOptionServerID(t *testing.T) {
 
 	fixtbyte := []byte{0, 2, 0, 14, 0, 1, 0, 1, 29, 205, 101, 0, 170, 187, 204, 221, 238, 255}
 	// test decoding bytes to []Option
-	if list, err := ParseOptions(fixtbyte); err != nil {
-		t.Errorf("could not parse fixture: %s", err)
+	if list, err := DecodeOptions(fixtbyte); err != nil {
+		t.Errorf("could not decode fixture: %s", err)
 	} else if len(list) != 1 {
 		t.Errorf("expected exactly 1 option, got %d", len(list))
 	} else {
@@ -172,8 +172,8 @@ func TestOptionIANA(t *testing.T) {
 
 	// fixture of an IA_NA option containing no other options
 	fixtbyte := []byte{0, 3, 0, 12, 0, 250, 153, 31, 0, 0, 1, 44, 0, 0, 1, 194}
-	if list, err := ParseOptions(fixtbyte); err != nil {
-		t.Errorf("could not parse fixture: %s", err)
+	if list, err := DecodeOptions(fixtbyte); err != nil {
+		t.Errorf("could not decode fixture: %s", err)
 	} else if len(list) != 1 {
 		t.Errorf("expected exactly 1 option, got %d", len(list))
 	} else {
@@ -226,8 +226,8 @@ func TestOptionIANA(t *testing.T) {
 
 	// redo all checks with an IAAddress option in the IANA option
 	fixtbyte = []byte{0, 3, 0, 40, 0, 250, 153, 31, 0, 0, 1, 44, 0, 0, 1, 194, 0, 5, 0, 24, 253, 212, 71, 50, 21, 217, 234, 106, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 14, 16, 0, 0, 28, 32}
-	if list, err := ParseOptions(fixtbyte); err != nil {
-		t.Errorf("could not parse fixture: %s", err)
+	if list, err := DecodeOptions(fixtbyte); err != nil {
+		t.Errorf("could not decode fixture: %s", err)
 	} else if len(list) != 1 {
 		t.Errorf("expected exactly 1 option, got %d", len(list))
 	} else {
@@ -296,8 +296,8 @@ func TestOptionIAAddress(t *testing.T) {
 
 	fixtbyte := []byte{0, 5, 0, 24, 253, 212, 71, 50, 21, 217, 234, 106, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 14, 16, 0, 0, 28, 32}
 	// test decoding bytes to []Option
-	if list, err := ParseOptions(fixtbyte); err != nil {
-		t.Errorf("could not parse fixture: %s", err)
+	if list, err := DecodeOptions(fixtbyte); err != nil {
+		t.Errorf("could not decode fixture: %s", err)
 	} else if len(list) != 1 {
 		t.Errorf("expected exactly 1 option, got %d", len(list))
 	} else {
@@ -357,8 +357,8 @@ func TestOptionOptionRequest(t *testing.T) {
 
 	fixtbyte := []byte{0, 6, 0, 4, 0, 23, 0, 24}
 	// test decoding bytes to []Option
-	if list, err := ParseOptions(fixtbyte); err != nil {
-		t.Errorf("could not parse fixture: %s", err)
+	if list, err := DecodeOptions(fixtbyte); err != nil {
+		t.Errorf("could not decode fixture: %s", err)
 	} else if len(list) != 1 {
 		t.Errorf("expected exactly 1 option, got %d", len(list))
 	} else {
@@ -419,8 +419,8 @@ func TestOptionElapsedTime(t *testing.T) {
 
 	fixtbyte := []byte{0, 8, 0, 2, 0, 10}
 	// test decoding bytes to []Option
-	if list, err := ParseOptions(fixtbyte); err != nil {
-		t.Errorf("could not parse fixture: %s", err)
+	if list, err := DecodeOptions(fixtbyte); err != nil {
+		t.Errorf("could not decode fixture: %s", err)
 	} else if len(list) != 1 {
 		t.Errorf("expected exactly 1 option, got %d", len(list))
 	} else {
@@ -471,8 +471,8 @@ func TestOptionStatusCode(t *testing.T) {
 
 	fixtbyte := []byte{0, 13, 0, 40, 0, 4, 83, 111, 109, 101, 32, 111, 102, 32, 116, 104, 101, 32, 97, 100, 100, 114, 101, 115, 115, 101, 115, 32, 97, 114, 101, 32, 110, 111, 116, 32, 111, 110, 32, 108, 105, 110, 107, 46}
 	// test decoding bytes to []Option
-	if list, err := ParseOptions(fixtbyte); err != nil {
-		t.Errorf("could not parse fixture: %s", err)
+	if list, err := DecodeOptions(fixtbyte); err != nil {
+		t.Errorf("could not decode fixture: %s", err)
 	} else if len(list) != 1 {
 		t.Errorf("expected exactly 1 option, got %d", len(list))
 	} else {
@@ -549,8 +549,8 @@ func TestOptionRapidCommit(t *testing.T) {
 
 	fixtbyte := []byte{0, 14, 0, 0}
 	// test decoding bytes to []Option
-	if list, err := ParseOptions(fixtbyte); err != nil {
-		t.Errorf("could not parse fixture: %s", err)
+	if list, err := DecodeOptions(fixtbyte); err != nil {
+		t.Errorf("could not decode fixture: %s", err)
 	} else if len(list) != 1 {
 		t.Errorf("expected exactly 1 option, got %d", len(list))
 	} else {

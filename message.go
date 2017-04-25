@@ -96,11 +96,11 @@ func ParseMessage(data []byte) (*Message, error) {
 	data[0] = 0
 	d.Xid = binary.BigEndian.Uint32(data[0:4])
 
-	// additional options to parse
+	// additional options to decode
 	if len(data) > 4 {
-		options, err := ParseOptions(data[4:])
+		options, err := DecodeOptions(data[4:])
 		if err != nil {
-			return nil, fmt.Errorf("could not parse options: %s", err)
+			return nil, fmt.Errorf("could not decode options: %s", err)
 		}
 
 		d.Options = options

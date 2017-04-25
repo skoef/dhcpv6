@@ -388,8 +388,8 @@ func (o OptionOptionRequest) HasOption(t OptionType) bool {
 	return false
 }
 
-// helper function to parse the DHCPv6 options requested in this specific option
-func (o *OptionOptionRequest) parseOptions(data []byte) error {
+// helper function to decode the DHCPv6 options requested in this specific option
+func (o *OptionOptionRequest) decodeOptions(data []byte) error {
 	var options []OptionType
 	for {
 		if len(data) < 2 {
@@ -541,10 +541,10 @@ func (o OptionRapidCommit) Marshal() ([]byte, error) {
 	return b, nil
 }
 
-// ParseOptions takes DHCPv6 option bytes and parses every handled option,
-// looking at its type and the given length, and returns a slice containing all
-// decoded structs
-func ParseOptions(data []byte) (Options, error) {
+// DecodeOptions takes DHCPv6 option bytes and tries to decode every handled
+// option, looking at its type and the given length, and returns a slice
+// containing all decoded structs
+func DecodeOptions(data []byte) (Options, error) {
 	// empty container
 	list := Options{}
 
@@ -589,7 +589,7 @@ func ParseOptions(data []byte) (Options, error) {
 			currentOption.(*OptionIANA).T2 = time.Duration(binary.BigEndian.Uint32(data[12:16]))
 			if optionLen > 12 {
 				var err error
-				currentOption.(*OptionIANA).Options, err = ParseOptions(data[16 : optionLen+4])
+				currentOption.(*OptionIANA).Options, err = DecodeOptions(data[16 : optionLen+4])
 				if err != nil {
 					return list, err
 				}
@@ -606,7 +606,7 @@ func ParseOptions(data []byte) (Options, error) {
 		case OptionTypeOptionRequest:
 			currentOption = &OptionOptionRequest{}
 			if optionLen > 0 {
-				currentOption.(*OptionOptionRequest).parseOptions(data[4 : 4+optionLen])
+				currentOption.(*OptionOptionRequest).decodeOptions(data[4 : 4+optionLen])
 			}
 		case OptionTypeElapsedTime:
 			if optionLen != 2 {
@@ -635,13 +635,14 @@ func ParseOptions(data []byte) (Options, error) {
 			fmt.Printf("unhandled option type: %s\n", optionType)
 		}
 
-		// append last parsed option to list
+		// append last decoded option to list
 		list = append(list, currentOption)
 
 		// chop off bytes and go on to next option
 		if len(data) <= int((4 + optionLen)) {
 			break
 		}
+
 		data = data[4+optionLen:]
 	}
 
