@@ -283,6 +283,12 @@ func TestOptionIANA(t *testing.T) {
 	if opt.HasOption(OptionTypeRapidCommit) != nil {
 		t.Errorf("IANA shouldn't have option OptionTypeRapidCommit")
 	}
+
+	// test matching output for String()
+	fixtstr = "IA_NA IAID:16423199 T1:300 T2:450 [IA_ADDR fdd4:4732:15d9:ea6a::1000 pltime:3600 vltime:7200]"
+	if fixtstr != opt.String() {
+		t.Errorf("unexpected String() output: %s", opt.String())
+	}
 }
 
 func TestOptionIAAddress(t *testing.T) {
