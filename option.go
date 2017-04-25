@@ -326,8 +326,6 @@ func (o OptionIAAddress) Marshal() ([]byte, error) {
 	// set type
 	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeIAAddress))
 	// set length
-	// for now this length is fixed, since options for IA_Address options are
-	// not implemented yet
 	binary.BigEndian.PutUint16(b[2:4], o.Len())
 	// set address
 	b = append(b, o.Address...)
@@ -356,8 +354,7 @@ func (o OptionOptionRequest) String() string {
 
 // Len returns the length in bytes of OptionOptionRequest's body
 func (o OptionOptionRequest) Len() uint16 {
-	// TODO: implement
-	return 0
+	return uint16(len(o.Options) * 2)
 }
 
 // Type returns OptionTypeOptionRequest
@@ -367,8 +364,28 @@ func (o OptionOptionRequest) Type() OptionType {
 
 // Marshal returns byte slice representing this OptionOptionRequest
 func (o OptionOptionRequest) Marshal() ([]byte, error) {
-	// TODO: implement
-	return nil, nil
+	// prepare byte slice of appropriate length
+	b := make([]byte, 4+o.Len())
+	// set type
+	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeOptionRequest))
+	// set length
+	binary.BigEndian.PutUint16(b[2:4], o.Len())
+	// fill in all options
+	for i, opt := range o.Options {
+		binary.BigEndian.PutUint16(b[4+(i*2):6+(i*2)], uint16(opt))
+	}
+	return b, nil
+}
+
+// HasOption returns Option if this IA_NA option has OptionType t as option or
+// nil otherwise
+func (o OptionOptionRequest) HasOption(t OptionType) bool {
+	for _, opt := range o.Options {
+		if opt == t {
+			return true
+		}
+	}
+	return false
 }
 
 // helper function to parse the DHCPv6 options requested in this specific option

@@ -320,3 +320,58 @@ func TestOptionIAAddress(t *testing.T) {
 		t.Errorf("marshalled IAAddress didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 }
+
+func TestOptionOptionRequest(t *testing.T) {
+	var opt *OptionOptionRequest
+
+	fixtbyte := []byte{0, 6, 0, 4, 0, 23, 0, 24}
+	// test decoding bytes to []Option
+	if list, err := ParseOptions(fixtbyte); err != nil {
+		t.Errorf("could not parse fixture: %s", err)
+	} else if len(list) != 1 {
+		t.Errorf("expected exactly 1 option, got %d", len(list))
+	} else {
+		opt = list[0].(*OptionOptionRequest)
+	}
+
+	// check contents of Option
+	if opt.Type() != OptionTypeOptionRequest {
+		t.Errorf("unexpected type: %s", opt.Type())
+	}
+	if !opt.HasOption(OptionTypeDNSServer) {
+		t.Errorf("OptionRequest should have OptionTypeDNSServer")
+	}
+	if !opt.HasOption(OptionTypeDNSSearchList) {
+		t.Errorf("OptionRequest should have OptionTypeDNSSearchList")
+	}
+	if opt.HasOption(OptionTypeClientID) {
+		t.Errorf("OptionRequest shouldn't have OptionTypeClientID")
+	}
+
+	// test matching output for String()
+	fixtstr := "option-request DNS Server (23) DNS Search List (24)"
+	if fixtstr != opt.String() {
+		t.Errorf("unexpected String() output: %s", opt.String())
+	}
+
+	// test if marshalled bytes match fixture
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionRequest: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionRequest didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// create same struct and see if its marshal matches fixture
+	opt = &OptionOptionRequest{
+		Options: []OptionType{
+			OptionTypeDNSServer,
+			OptionTypeDNSSearchList,
+		},
+	}
+
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionRequest: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionRequest didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+}
