@@ -104,6 +104,14 @@ func TestOptionClientID(t *testing.T) {
 	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
 		t.Errorf("marshalled ClientID didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
+
+	// try to decode a OptionClientID with too few bytes for DUID
+	wrongbytes := []byte{0, 1, 0, 1, 0}
+	if _, err := DecodeOptions(wrongbytes); err == nil {
+		t.Error("expected error while trying to decode OptionClientID with too few bytes")
+	} else if err != errDUIDTooShort {
+		t.Errorf("unexpected error: %s", err)
+	}
 }
 
 // test OptionServerID
@@ -164,6 +172,14 @@ func TestOptionServerID(t *testing.T) {
 		t.Errorf("error marshalling ServerID: %s", err)
 	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
 		t.Errorf("marshalled ServerID didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// try to decode a OptionServerID with too few bytes for DUID
+	wrongbytes := []byte{0, 2, 0, 1, 0}
+	if _, err := DecodeOptions(wrongbytes); err == nil {
+		t.Error("expected error while trying to decode OptionServerID with too few bytes")
+	} else if err != errDUIDTooShort {
+		t.Errorf("unexpected error: %s", err)
 	}
 }
 

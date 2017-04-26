@@ -548,13 +548,13 @@ func DecodeOptions(data []byte) (Options, error) {
 	// empty container
 	list := Options{}
 
-	// the first 4 bytes of a  option contain option type and data length
-	// so that's the least amount of bytes expected
-	if len(data) < 4 {
-		return list, errOptionTooShort
-	}
-
 	for {
+		// the first 4 bytes of a  option contain option type and data length
+		// so that's the least amount of bytes expected
+		if len(data) < 4 {
+			return list, errOptionTooShort
+		}
+
 		optionType := OptionType(binary.BigEndian.Uint16(data[0:2]))
 		optionLen := binary.BigEndian.Uint16(data[2:4])
 		// check if we have at least the same amount of bytes this option's length
@@ -569,14 +569,14 @@ func DecodeOptions(data []byte) (Options, error) {
 			currentOption = &OptionClientID{}
 			duid, err := DecodeDUID(data[4 : 4+optionLen])
 			if err != nil {
-				return list, errOptionTooShort
+				return list, err
 			}
 			currentOption.(*OptionClientID).DUID = duid
 		case OptionTypeServerID:
 			currentOption = &OptionServerID{}
 			duid, err := DecodeDUID(data[4 : 4+optionLen])
 			if err != nil {
-				return list, errOptionTooShort
+				return list, err
 			}
 			currentOption.(*OptionServerID).DUID = duid
 		case OptionTypeIANA:
