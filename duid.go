@@ -37,6 +37,7 @@ const (
 	DUIDTypeLL
 )
 
+// DUID acts as an interface of other DUIDs
 type DUID interface {
 	String() string
 	Len() uint16

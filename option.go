@@ -13,7 +13,7 @@ var (
 	errOptionTooLong  = errors.New("option too long")
 )
 
-// DHCPv6 option type
+// OptionType describes DHCPv6 option types
 type OptionType uint8
 
 //  Option types as described in RFC3315 and RFC3646
