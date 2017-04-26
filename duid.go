@@ -25,7 +25,7 @@ func (d DUIDType) String() string {
 	case DUIDTypeLL:
 		return "LinkLayer"
 	default:
-		return "Unknown"
+		return typeUnknown
 	}
 }
 

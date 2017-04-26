@@ -91,7 +91,7 @@ func (t OptionType) String() string {
 		case OptionTypeDNSSearchList:
 			return "DNS Search List"
 		default:
-			return "Unknown"
+			return typeUnknown
 		}
 	}
 	return fmt.Sprintf("%s (%d)", name(), t)

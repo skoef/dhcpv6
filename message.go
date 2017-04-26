@@ -8,6 +8,7 @@ import (
 
 var (
 	errMessageTooShort = errors.New("message too short")
+	typeUnknown        = "Unknown"
 )
 
 type MessageType uint8
@@ -60,7 +61,7 @@ func (t MessageType) String() string {
 		case MessageTypeRelayReply:
 			return "Relay Reply"
 		default:
-			return "Unknown"
+			return typeUnknown
 		}
 	}
 	return fmt.Sprintf("message type %s (%d)", name(), t)
