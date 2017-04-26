@@ -45,6 +45,29 @@ func TestOptionTypeString(t *testing.T) {
 	}
 }
 
+// test DecodeOptions
+// each separate Option will be tested in their own test
+// but some edges cases in DecodeOptions will be tested here
+func TestDecodeOptions(t *testing.T) {
+	var fixtbyte []byte
+
+	// try to decode too few bytes and check for an error
+	fixtbyte = []byte{0, 1, 0}
+	if _, err := DecodeOptions(fixtbyte); err == nil {
+		t.Error("expected error while trying to decode too few bytes")
+	} else if err != errOptionTooShort {
+		t.Errorf("unexpected error: %s", err)
+	}
+
+	// try to decode an option with an length set longer than bytes it carries
+	fixtbyte = []byte{0, 1, 0, 4}
+	if _, err := DecodeOptions(fixtbyte); err == nil {
+		t.Error("expected error while trying to decode too few bytes")
+	} else if err != errOptionTooShort {
+		t.Errorf("unexpected error: %s", err)
+	}
+}
+
 // test OptionClientID
 func TestOptionClientID(t *testing.T) {
 	var opt *OptionClientID
