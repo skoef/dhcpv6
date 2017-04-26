@@ -91,9 +91,6 @@ func TestDuidLLT(t *testing.T) {
 
 	// recreate same struct and see if its marshal matches fixture
 	duidllt = &DUIDLLT{
-		DUIDBase: &DUIDBase{
-			DUIDType: DUIDTypeLLT,
-		},
 		HardwareType:     fixthwtype,
 		Time:             fixttime,
 		LinkLayerAddress: fixtmac,
@@ -149,9 +146,6 @@ func TestDuidLL(t *testing.T) {
 
 	// recreate same struct and see if it's marshal matches fixture
 	duidll = &DUIDLL{
-		DUIDBase: &DUIDBase{
-			DUIDType: DUIDTypeLL,
-		},
 		HardwareType:     fixthwtype,
 		LinkLayerAddress: fixtmac,
 	}

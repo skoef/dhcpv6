@@ -45,20 +45,15 @@ type DUID interface {
 	Marshal() ([]byte, error)
 }
 
-type DUIDBase struct {
-	DUIDType DUIDType
-}
-
 // DUIDLLT - as described in https://tools.ietf.org/html/rfc3315#section-9.2
 type DUIDLLT struct {
-	*DUIDBase
 	HardwareType     uint16
 	Time             time.Time
 	LinkLayerAddress net.HardwareAddr
 }
 
 func (d DUIDLLT) String() string {
-	output := fmt.Sprintf("hwaddr/time type %d", d.DUIDType)
+	output := fmt.Sprintf("hwaddr/time type %d", d.Type())
 
 	if !d.Time.IsZero() {
 		// subtract 30 year offset from time
@@ -99,20 +94,18 @@ func (d DUIDLLT) Marshal() ([]byte, error) {
 // DUIDEN - as described in https://tools.ietf.org/html/rfc3315#section-9.3
 // NOTE: currently not implemented
 type DUIDEN struct {
-	*DUIDBase
 	EnterpriseNumber uint32
 	ID               []byte
 }
 
 // DUIDLL - as described in https://tools.ietf.org/html/rfc3315#section-9.4
 type DUIDLL struct {
-	*DUIDBase
 	HardwareType     uint16
 	LinkLayerAddress net.HardwareAddr
 }
 
 func (d DUIDLL) String() string {
-	return fmt.Sprintf("hwaddr type %d %v", d.DUIDType, d.LinkLayerAddress)
+	return fmt.Sprintf("hwaddr type %d %v", d.Type(), d.LinkLayerAddress)
 }
 
 func (d DUIDLL) Len() uint16 {
@@ -162,9 +155,6 @@ func DecodeDUID(data []byte) (DUID, error) {
 			return currentDUID, errDUIDTooShort
 		}
 		currentDUID = &DUIDLLT{
-			DUIDBase: &DUIDBase{
-				DUIDType: duidType,
-			},
 			HardwareType: binary.BigEndian.Uint16(data[2:4]),
 			// as stated in RFC3315, DUID epoch is at Jan 1st 2000 (UTC)
 			// and golang Time works with an epoch at Jan 1st 1970 (UTC)
@@ -183,9 +173,6 @@ func DecodeDUID(data []byte) (DUID, error) {
 			return currentDUID, errDUIDTooShort
 		}
 		currentDUID = &DUIDLL{
-			DUIDBase: &DUIDBase{
-				DUIDType: duidType,
-			},
 			HardwareType: binary.BigEndian.Uint16(data[2:4]),
 		}
 		if len(data) > 4 {

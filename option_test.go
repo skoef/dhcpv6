@@ -114,9 +114,6 @@ func TestOptionClientID(t *testing.T) {
 	// create same OptionClientID and see if its marshal matches fixture
 	opt = &OptionClientID{
 		DUID: &DUIDLLT{
-			DUIDBase: &DUIDBase{
-				DUIDType: DUIDTypeLLT,
-			},
 			HardwareType: 1,
 			Time:         time.Unix(1446771200, 0),
 		},
@@ -183,9 +180,6 @@ func TestOptionServerID(t *testing.T) {
 	// create same OptionClientID and see if its marshal matches fixture
 	opt = &OptionServerID{
 		DUID: &DUIDLLT{
-			DUIDBase: &DUIDBase{
-				DUIDType: DUIDTypeLLT,
-			},
 			HardwareType: 1,
 			Time:         time.Unix(1446771200, 0),
 		},
