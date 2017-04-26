@@ -87,6 +87,11 @@ func (m Message) HasOption(t OptionType) Option {
 	return nil
 }
 
+// AddOption adds given Option to slice of Options of Message
+func (m *Message) AddOption(o Option) {
+	m.Options = append(m.Options, o)
+}
+
 // Marshal returns byte slice representing this Message or error
 func (m Message) Marshal() ([]byte, error) {
 	// prepare byte slice of appropriate length

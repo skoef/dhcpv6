@@ -115,3 +115,23 @@ func TestDecodeMessage(t *testing.T) {
 		}
 	}
 }
+
+func TestMessageAddOption(t *testing.T) {
+	// create message, doesn't really matter what type
+	msg := &Message{
+		MessageType: MessageTypeAdvertise,
+	}
+	// create option, again, doesn't really matter what type
+	opt := &OptionRapidCommit{}
+
+	// confirm that message doesn't contain the option already
+	if msg.HasOption(opt.Type()) != nil {
+		t.Errorf("message should not have option of type: %s", opt.Type())
+	}
+
+	// add option to message and check if HasOption confirms that
+	msg.AddOption(opt)
+	if msg.HasOption(opt.Type()) == nil {
+		t.Errorf("message should have option of type: %s", opt.Type())
+	}
+}
