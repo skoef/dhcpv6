@@ -11,6 +11,7 @@ var (
 	typeUnknown        = "Unknown"
 )
 
+// MessageType describes DHCPv6 message types
 type MessageType uint8
 
 // add constants for all DHCPv6 message types from RFC3315
@@ -64,9 +65,10 @@ func (t MessageType) String() string {
 			return typeUnknown
 		}
 	}
-	return fmt.Sprintf("message type %s (%d)", name(), t)
+	return fmt.Sprintf("%s (%d)", name(), t)
 }
 
+// Message represents a DHCPv6 message
 type Message struct {
 	MessageType MessageType
 	Xid         uint32
@@ -81,10 +83,34 @@ func (m Message) HasOption(t OptionType) Option {
 			return o
 		}
 	}
+
 	return nil
 }
 
-func ParseMessage(data []byte) (*Message, error) {
+// Marshal returns byte slice representing this Message or error
+func (m Message) Marshal() ([]byte, error) {
+	// prepare byte slice of appropriate length
+	b := make([]byte, 4)
+	// set transaction-id and then message type
+	// the other way around would be more logical, but since transaction-id is
+	// 3 bytes, this way is easier
+	binary.BigEndian.PutUint32(b[0:4], m.Xid)
+	b[0] = uint8(m.MessageType)
+	// append option bytes
+	if len(m.Options) > 0 {
+		optb, err := m.Options.Marshal()
+		if err != nil {
+			return nil, err
+		}
+		b = append(b, optb...)
+	}
+
+	return b, nil
+}
+
+// DecodeMessage takes DHCPv6 message bytes and tries to decode the message and
+// optionally its options and returns decoded Message or error if any occurs
+func DecodeMessage(data []byte) (*Message, error) {
 	// the first 4 bytes of a  message contain message type and transaction-id
 	// so that's the least amount of bytes expected
 	if len(data) < 4 {
@@ -94,8 +120,7 @@ func ParseMessage(data []byte) (*Message, error) {
 	d := &Message{
 		MessageType: MessageType(data[0]),
 	}
-	data[0] = 0
-	d.Xid = binary.BigEndian.Uint32(data[0:4])
+	d.Xid = binary.BigEndian.Uint32(append([]byte{0}, data[1:4]...))
 
 	// additional options to decode
 	if len(data) > 4 {
