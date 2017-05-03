@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func TestDUIDTypeString(t *testing.T) {
@@ -17,6 +19,7 @@ func TestDUIDTypeString(t *testing.T) {
 		{DUIDTypeLLT, "LinkLayerTime"},
 		{DUIDTypeEN, "Enterprise Number"},
 		{DUIDTypeLL, "LinkLayer"},
+		{DUIDTypeUUID, "UUID"},
 	}
 
 	for _, test := range tests {
@@ -150,6 +153,63 @@ func TestDuidLL(t *testing.T) {
 		LinkLayerAddress: fixtmac,
 	}
 	if mshByte, err := duidll.Marshal(); err != nil {
+		t.Errorf("error marshalling DUID: %s", err)
+	} else if bytes.Compare(fixtbyte, mshByte) != 0 {
+		t.Errorf("marshalled DUID didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+}
+
+func TestDuidUUID(t *testing.T) {
+	// test decoding bytes to DUIDUUID
+	fixtbyte := []byte{0, 4, 126, 102, 234, 162, 230, 221, 73, 123, 142, 33, 49, 148, 75, 40, 43, 67}
+	duid, err := DecodeDUID(fixtbyte)
+	if err != nil {
+		t.Errorf("error decoding fixture: %s", err)
+	}
+
+	duiduuid := duid.(*DUIDUUID)
+	// check contents of duid
+	if duiduuid.Type() != DUIDTypeUUID {
+		t.Errorf("expected duid type %d, got %d", DUIDTypeUUID, duiduuid.Type())
+	}
+
+	fixtuuid := "7e66eaa2-e6dd-497b-8e21-31944b282b43"
+	if fixtuuid != duiduuid.UUID.String() {
+		t.Errorf("expected UUID %s, got %s", fixtuuid, duiduuid.UUID.String())
+	}
+
+	// test for error when decoding too small DUIDUUID
+	if _, err = DecodeDUID(fixtbyte[:17]); err == nil {
+		t.Error("expected error decoding too small DUIDUUID")
+	} else if err != errDUIDTooShort {
+		t.Errorf("unexpected error: %s", err)
+	}
+
+	// test matching output for String()
+	fixtstr := "type 4"
+	if duiduuid.String() != fixtstr {
+		t.Errorf("unexpected String() output: %s", duiduuid.String())
+	}
+
+	// test matching output for Len()
+	fixtlen := uint16(18)
+	if duiduuid.Len() != fixtlen {
+		t.Errorf("expected Len of %d, got %d", fixtlen, duiduuid.Len())
+	}
+
+	// test if marshalled bytes match fixture
+	if mshByte, merr := duiduuid.Marshal(); merr != nil {
+		t.Errorf("error marshalling DUID: %s", merr)
+	} else if bytes.Compare(fixtbyte, mshByte) != 0 {
+		t.Errorf("marshalled DUID didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// recreate same struct and see if it's marshal matches fixture
+	duiduuid = &DUIDUUID{}
+	if duiduuid.UUID, err = uuid.Parse(fixtuuid); err != nil {
+		t.Errorf("error parsing UUID: %s", err)
+	}
+	if mshByte, err := duiduuid.Marshal(); err != nil {
 		t.Errorf("error marshalling DUID: %s", err)
 	} else if bytes.Compare(fixtbyte, mshByte) != 0 {
 		t.Errorf("marshalled DUID didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)

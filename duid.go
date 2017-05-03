@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 var (
@@ -24,17 +26,23 @@ func (d DUIDType) String() string {
 		return "Enterprise Number"
 	case DUIDTypeLL:
 		return "LinkLayer"
+	case DUIDTypeUUID:
+		return "UUID"
 	default:
 		return typeUnknown
 	}
 }
 
-// DUID types as described in https://tools.ietf.org/html/rfc3315#section-9.1
+// DUID types as described in https://tools.ietf.org/html/rfc3315#section-9.1 and
+// https://tools.ietf.org/html/rfc6355#section-4
 const (
 	_ DUIDType = iota
+	// RFC3315
 	DUIDTypeLLT
 	DUIDTypeEN
 	DUIDTypeLL
+	// RFC6355
+	DUIDTypeUUID
 )
 
 // DUID acts as an interface of other DUIDs
@@ -133,6 +141,42 @@ func (d DUIDLL) Marshal() ([]byte, error) {
 	return b, nil
 }
 
+// DUIDUUID as described in https://tools.ietf.org/html/rfc6355#section-4
+type DUIDUUID struct {
+	UUID uuid.UUID
+}
+
+func (d DUIDUUID) String() string {
+	return fmt.Sprintf("type %d", d.Type())
+}
+
+// Len returns length in bytes for the entire DUIDUUID
+func (d DUIDUUID) Len() uint16 {
+	// static length
+	return uint16(18)
+}
+
+// Type returns DUIDTypeUUID
+func (d DUIDUUID) Type() DUIDType {
+	return DUIDTypeUUID
+}
+
+// Marshal returns byte slice representing this DUIDLL
+func (d DUIDUUID) Marshal() ([]byte, error) {
+	// prepare byte slice of appropriate length
+	b := make([]byte, 2)
+	// set type
+	binary.BigEndian.PutUint16(b[0:2], uint16(DUIDTypeUUID))
+	// append UUID
+	ub, err := d.UUID.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+	b = append(b, ub...)
+
+	return b, nil
+}
+
 // DecodeDUID tries to decode given byte slice to one of the defined
 // DUIDTypes
 func DecodeDUID(data []byte) (DUID, error) {
@@ -177,6 +221,16 @@ func DecodeDUID(data []byte) (DUID, error) {
 		}
 		if len(data) > 4 {
 			currentDUID.(*DUIDLL).LinkLayerAddress = data[4:]
+		}
+	case DUIDTypeUUID:
+		// DUID-UUIDs should be exactly 18 bytes
+		// with the UUID being 128 bits / 16 bytes
+		if len(data) != 18 {
+			return currentDUID, errDUIDTooShort
+		}
+		currentDUID = &DUIDUUID{}
+		if err := currentDUID.(*DUIDUUID).UUID.UnmarshalBinary(data[2:18]); err != nil {
+			return currentDUID, err
 		}
 	default:
 		return currentDUID, fmt.Errorf("unhandled DUIDType %s", duidType)
