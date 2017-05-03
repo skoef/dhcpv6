@@ -85,6 +85,12 @@ func TestDuidLLT(t *testing.T) {
 		t.Errorf("unexpected String() output: %s", duidllt.String())
 	}
 
+	// test matching output for Len()
+	fixtlen := uint16(14)
+	if duidllt.Len() != fixtlen {
+		t.Errorf("expected Len of %d, got %d", fixtlen, duidllt.Len())
+	}
+
 	// test if marshalled bytes match fixture
 	if mshByte, err := duidllt.Marshal(); err != nil {
 		t.Errorf("error marshalling DUID: %s", err)
@@ -138,6 +144,12 @@ func TestDuidLL(t *testing.T) {
 	fixtstr := "hwaddr type 3 aa:bb:cc:dd:ee:ff"
 	if duidll.String() != fixtstr {
 		t.Errorf("unexpected String() output: %s", duidll.String())
+	}
+
+	// test matching output for Len()
+	fixtlen := uint16(10)
+	if duidll.Len() != fixtlen {
+		t.Errorf("expected Len of %d, got %d", fixtlen, duidll.Len())
 	}
 
 	// test if marshalled bytes match fixture
