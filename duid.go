@@ -72,8 +72,10 @@ func (d DUIDLLT) String() string {
 	return output
 }
 
+// Len returns length in bytes for entire DUIDLLT
 func (d DUIDLLT) Len() uint16 {
-	return uint16(4 + 4 + len(d.LinkLayerAddress))
+	// type, hwtype, time
+	return uint16(8 + len(d.LinkLayerAddress))
 }
 
 // Type returns DUIDTypeLLT
@@ -85,8 +87,7 @@ func (d DUIDLLT) Type() DUIDType {
 func (d DUIDLLT) Marshal() ([]byte, error) {
 	// prepare byte slice of appropriate length
 	// LinkLayerAddress will be appended later
-	len := 4 + 4 // type, hwtype, time
-	b := make([]byte, len)
+	b := make([]byte, 8) // type, hwtype, time
 
 	// set type
 	binary.BigEndian.PutUint16(b[0:2], uint16(DUIDTypeLLT))
@@ -116,6 +117,7 @@ func (d DUIDLL) String() string {
 	return fmt.Sprintf("hwaddr type %d %v", d.Type(), d.LinkLayerAddress)
 }
 
+// Len returns length in bytes for entire DUIDLL
 func (d DUIDLL) Len() uint16 {
 	return uint16(4 + len(d.LinkLayerAddress))
 }
@@ -129,8 +131,7 @@ func (d DUIDLL) Type() DUIDType {
 func (d DUIDLL) Marshal() ([]byte, error) {
 	// prepare byte slice of appropriate length
 	// LinkLayerAddress will be appended later
-	len := 4 // type, hwtype
-	b := make([]byte, len)
+	b := make([]byte, 4) // type, hwtype
 
 	// set type
 	binary.BigEndian.PutUint16(b[0:2], uint16(DUIDTypeLL))
@@ -191,7 +192,7 @@ func DecodeDUID(data []byte) (DUID, error) {
 
 	switch duidType {
 	case DUIDTypeLLT:
-		// DUID-LLT's should be at least 8 bytes
+		// DUID-LLTs should be at least 8 bytes
 		// containing hardware type, time
 		// the link layer address is variable in length, but here a regular MAC
 		// address is assumed
@@ -209,7 +210,7 @@ func DecodeDUID(data []byte) (DUID, error) {
 			currentDUID.(*DUIDLLT).LinkLayerAddress = data[8:]
 		}
 	case DUIDTypeLL:
-		// DUID-LL's should be at least 4 bytes
+		// DUID-LLs should be at least 4 bytes
 		// containing hardware type
 		// the link layer address is variable in length, but here a regular MAC
 		// address is assumed
