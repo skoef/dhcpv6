@@ -322,6 +322,31 @@ func TestOptionIANA(t *testing.T) {
 	if fixtstr != opt.String() {
 		t.Errorf("unexpected String() output: %s", opt.String())
 	}
+
+	// override IAAddress option and test if it was replaced instead of added
+	newiaddr := &OptionIAAddress{
+		Address:           net.ParseIP("fdd4:4732:15d9:ea6a::1000"),
+		PreferredLifetime: 1800,
+		ValidLifetime:     7200,
+	}
+	opt.SetOption(newiaddr)
+
+	if len(opt.Options) != 1 {
+		t.Errorf("expected 1 option, got %d options", len(opt.Options))
+	}
+
+	// check if PreferredLifetime (which was 3600) is now 1800
+	if opt.Options[0].(*OptionIAAddress).PreferredLifetime != newiaddr.PreferredLifetime {
+		t.Errorf("expected preferred lifetime of %d, got %d", newiaddr.PreferredLifetime, opt.Options[0].(*OptionIAAddress).PreferredLifetime)
+	}
+
+	// use SetOption for an option that was not set before and see if it is added
+	// anyway
+	rc := &OptionRapidCommit{}
+	opt.SetOption(rc)
+	if len(opt.Options) != 2 {
+		t.Errorf("expected 2 options, got %d options", len(opt.Options))
+	}
 }
 
 func TestOptionIAAddress(t *testing.T) {

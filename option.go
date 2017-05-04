@@ -1,6 +1,7 @@
 package dhcpv6
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -219,6 +220,25 @@ func (o OptionServerID) Marshal() ([]byte, error) {
 	return b, nil
 }
 
+// Equal returns true if given ServerID option is byte-wise identical or false
+// otherwise
+func (o OptionServerID) Equal(opt Option) bool {
+	if opt.Type() != OptionTypeServerID {
+		return false
+	}
+
+	optb, err := opt.Marshal()
+	if err != nil {
+		return false
+	}
+	myb, err := o.Marshal()
+	if err != nil {
+		return false
+	}
+
+	return bytes.Compare(optb, myb) == 0
+}
+
 // OptionIANA implements the Identity Association for Non-temporary Addresses
 // option as described at https://tools.ietf.org/html/rfc3315#section-22.4
 type OptionIANA struct {
@@ -289,6 +309,19 @@ func (o OptionIANA) HasOption(t OptionType) Option {
 // AddOption adds given Option to slice of Options
 func (o *OptionIANA) AddOption(opt Option) {
 	o.Options = append(o.Options, opt)
+}
+
+// SetOption sets given Option to slice of Options, replacing first potential
+// duplicate option of the same type
+func (o *OptionIANA) SetOption(newopt Option) {
+	for i, opt := range o.Options {
+		if opt.Type() == newopt.Type() {
+			o.Options[i] = newopt
+			return
+		}
+	}
+
+	o.AddOption(newopt)
 }
 
 // OptionIAAddress implements the IA Address option as described at
