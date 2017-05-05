@@ -37,6 +37,7 @@ func TestOptionTypeString(t *testing.T) {
 		{OptionTypeDNSServer, "DNS Server (23)"},
 		{OptionTypeDNSSearchList, "DNS Search List (24)"},
 		{OptionTypeNextHop, "Next Hop (242)"},
+		{OptionTypeRoutePrefix, "Route Prefix (243)"},
 	}
 
 	for _, test := range tests {
@@ -684,5 +685,142 @@ func TestOptionNextHop(t *testing.T) {
 		t.Errorf("error marshalling OptionNextHop: %s", err)
 	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
 		t.Errorf("marshalled OptionNextHop didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// add route prefix option
+	opt.SetOption(&OptionRoutePrefix{
+		RouteLifetime: 3600,
+		Metric:        10,
+		Preference:    RoutePreferenceHigh,
+		Prefix:        net.ParseIP("fdd4:4732:15d9:ea6a::"),
+		PrefixLength:  64,
+	})
+
+	// test matching output for String()
+	fixtstr = "next-hop fdd4:4732:15d9:ea6a::1000 [route-prefix fdd4:4732:15d9:ea6a::/64]"
+	if fixtstr != opt.String() {
+		t.Errorf("unexpected String() output: %s", opt.String())
+	}
+
+	fixtbyte = []byte{0, 242, 0, 42, 253, 212, 71, 50, 21, 217, 234, 106, 0, 0, 0, 0, 0, 0, 16, 0, 0, 243, 0, 22, 0, 0, 14, 16, 64, 24, 253, 212, 71, 50, 21, 217, 234, 106, 0, 0, 0, 0, 0, 0, 0, 0}
+	// test decoding bytes to []Option
+	if list, err := DecodeOptions(fixtbyte); err != nil {
+		t.Errorf("could not decode fixture: %s", err)
+	} else if len(list) != 1 {
+		t.Errorf("expected exactly 1 option, got %d", len(list))
+	} else {
+		opt = list[0].(*OptionNextHop)
+	}
+
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionNextHop: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionNextHop didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+}
+
+func TestOptionRoutePrefix(t *testing.T) {
+	var opt *OptionRoutePrefix
+
+	fixtbyte := []byte{0, 243, 0, 22, 0, 0, 14, 16, 64, 24, 253, 212, 71, 50, 21, 217, 234, 106, 0, 0, 0, 0, 0, 0, 0, 0}
+	// test decoding bytes to []Option
+	if list, err := DecodeOptions(fixtbyte); err != nil {
+		t.Errorf("could not decode fixture: %s", err)
+	} else if len(list) != 1 {
+		t.Errorf("expected exactly 1 option, got %d", len(list))
+	} else {
+		opt = list[0].(*OptionRoutePrefix)
+	}
+
+	// check contents of Option
+	if opt.Type() != OptionTypeRoutePrefix {
+		t.Errorf("unexpected type: %s", opt.Type())
+	}
+	fixtlt := uint32(3600)
+	if opt.RouteLifetime != fixtlt {
+		t.Errorf("expected router lifetime %d, got %d", fixtlt, opt.RouteLifetime)
+	}
+	fixtpl := uint8(64)
+	if opt.PrefixLength != fixtpl {
+		t.Errorf("expected prefix length %d, got %d", fixtpl, opt.PrefixLength)
+	}
+	fixtpref := RoutePreferenceLow
+	if opt.Preference != fixtpref {
+		t.Errorf("expected preference %s, got %s", fixtpref, opt.Preference)
+	}
+	fixtprefix := net.ParseIP("fdd4:4732:15d9:ea6a::")
+	if !opt.Prefix.Equal(fixtprefix) {
+		t.Errorf("expected prefix %s, got %s", fixtprefix, opt.Prefix)
+	}
+
+	// check body length
+	fixtlen := uint16(22)
+	if opt.Len() != fixtlen {
+		t.Errorf("expected length %d, got %d", fixtlen, opt.Len())
+	}
+
+	// test matching output for String()
+	fixtstr := fmt.Sprintf("route-prefix %s/%d", fixtprefix, fixtpl)
+	if fixtstr != opt.String() {
+		t.Errorf("unexpected String() output: %s", opt.String())
+	}
+
+	// test if marshalled bytes match fixture
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionRoutePrefix: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionRoutePrefix didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// create same struct and see if its marshal matches fixture
+	opt = &OptionRoutePrefix{
+		RouteLifetime: fixtlt,
+		PrefixLength:  fixtpl,
+		Preference:    fixtpref,
+		Metric:        10,
+		Prefix:        fixtprefix,
+	}
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionRoutePrefix: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionRoutePrefix didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// check if route preference is correctly parsed
+	fixtbyte[9] = 8
+	if list, err := DecodeOptions(fixtbyte); err != nil {
+		t.Errorf("could not decode fixture: %s", err)
+	} else if len(list) != 1 {
+		t.Errorf("expected exactly 1 option, got %d", len(list))
+	} else {
+		opt = list[0].(*OptionRoutePrefix)
+	}
+
+	if opt.Preference != RoutePreferenceHigh {
+		t.Errorf("expected router preference %s, got %s", RoutePreferenceHigh, opt.Preference)
+	}
+
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionRoutePrefix: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionRoutePrefix didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+}
+
+func TestRoutePreferenceString(t *testing.T) {
+	tests := []struct {
+		in  RoutePreference
+		out string
+	}{
+		{RoutePreferenceMedium, "Medium (0)"},
+		{RoutePreferenceHigh, "High (1)"},
+		{RoutePreferenceLow, "Low (3)"},
+		{255, "Unknown (255)"},
+	}
+
+	for _, test := range tests {
+		if strings.Compare(test.in.String(), test.out) != 0 {
+			t.Errorf("expected %s but got %s", test.out, test.in.String())
+		}
 	}
 }

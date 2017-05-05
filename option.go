@@ -47,7 +47,8 @@ const (
 	OptionTypeDNSServer
 	OptionTypeDNSSearchList
 	// draft-ietf-mif-dhcpv6-route-option
-	OptionTypeNextHop OptionType = 242
+	OptionTypeNextHop     OptionType = 242
+	OptionTypeRoutePrefix OptionType = 243
 )
 
 func (t OptionType) String() string {
@@ -97,6 +98,8 @@ func (t OptionType) String() string {
 			return "DNS Search List"
 		case OptionTypeNextHop:
 			return "Next Hop"
+		case OptionTypeRoutePrefix:
+			return "Route Prefix"
 		default:
 			return typeUnknown
 		}
@@ -627,6 +630,97 @@ func (o OptionNextHop) Marshal() ([]byte, error) {
 	return b, nil
 }
 
+type RoutePreference uint8
+
+// Route preferences as described at https://tools.ietf.org/html/draft-ietf-mif-dhcpv6-route-option-05#section-5.2
+const (
+	RoutePreferenceMedium RoutePreference = iota
+	RoutePreferenceHigh
+	_
+	RoutePreferenceLow
+)
+
+func (s RoutePreference) String() string {
+	name := func() string {
+		switch s {
+		case RoutePreferenceMedium:
+			return "Medium"
+		case RoutePreferenceHigh:
+			return "High"
+		case RoutePreferenceLow:
+			return "Low"
+		default:
+			return "Unknown"
+		}
+	}
+
+	return fmt.Sprintf("%s (%d)", name(), s)
+}
+
+// OptionRoutePrefix implements the Next Hop option proposed in
+// https://tools.ietf.org/html/draft-ietf-mif-dhcpv6-route-option-05#section-5.2
+type OptionRoutePrefix struct {
+	optionContainer
+	RouteLifetime uint32
+	PrefixLength  uint8
+	Preference    RoutePreference
+	Metric        uint8
+	Prefix        net.IP
+}
+
+func (o OptionRoutePrefix) String() string {
+	output := fmt.Sprintf("route-prefix %s/%d", o.Prefix, o.PrefixLength)
+	if len(o.options) > 0 {
+		output += fmt.Sprintf(" %s", o.options)
+	}
+
+	return output
+}
+
+// Len returns the length in bytes of OptionNextHop's body
+func (o OptionRoutePrefix) Len() uint16 {
+	return 22 + o.options.Len()
+}
+
+// Type returns OptionTypeNextHop
+func (o OptionRoutePrefix) Type() OptionType {
+	return OptionTypeRoutePrefix
+}
+
+// Marshal returns byte slice representing this OptionRoutePrefix
+func (o OptionRoutePrefix) Marshal() ([]byte, error) {
+	// prepare byte slice of appropriate length
+	b := make([]byte, 10)
+	// set type
+	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeRoutePrefix))
+	// set length
+	binary.BigEndian.PutUint16(b[2:4], o.Len())
+	// set router lifetime
+	binary.BigEndian.PutUint32(b[4:8], o.RouteLifetime)
+	// set prefix length
+	b[8] = o.PrefixLength
+	// set router preference
+	// medium is 00, which is default
+	switch o.Preference {
+	case RoutePreferenceLow:
+		b[9] ^= 24 // 2^4 + 2^3
+	case RoutePreferenceHigh:
+		b[9] ^= 8 // 2^3
+	}
+	// append prefix
+	b = append(b, o.Prefix...)
+	// add options
+	if len(o.options) > 0 {
+		optMarshal, err := o.options.Marshal()
+		if err != nil {
+			return nil, err
+		}
+		b = append(b, optMarshal...)
+	}
+
+	return b, nil
+}
+
 // DecodeOptions takes DHCPv6 option bytes and tries to decode every handled
 // option, looking at its type and the given length, and returns a slice
 // containing all decoded structs
@@ -727,6 +821,29 @@ func DecodeOptions(data []byte) (Options, error) {
 			if optionLen > 16 {
 				var err error
 				currentOption.(*OptionNextHop).options, err = DecodeOptions(data[20 : optionLen+4])
+				if err != nil {
+					return list, err
+				}
+			}
+
+		case OptionTypeRoutePrefix:
+			if optionLen < 22 {
+				return list, errOptionTooShort
+			}
+			currentOption = &OptionRoutePrefix{
+				PrefixLength: data[8],
+				Prefix:       data[10:26],
+			}
+			currentOption.(*OptionRoutePrefix).RouteLifetime = binary.BigEndian.Uint32(data[4:8])
+			// parse preference
+			if data[9]&16 > 0 && data[9]&8 > 0 { // 2^4 + 2^3
+				currentOption.(*OptionRoutePrefix).Preference = RoutePreferenceLow
+			} else if data[9]&8 > 0 { // 2^3
+				currentOption.(*OptionRoutePrefix).Preference = RoutePreferenceHigh
+			}
+			if optionLen > 22 {
+				var err error
+				currentOption.(*OptionRoutePrefix).options, err = DecodeOptions(data[26 : optionLen+4])
 				if err != nil {
 					return list, err
 				}
