@@ -248,16 +248,16 @@ func (o OptionServerID) Equal(opt Option) bool {
 // OptionIANA implements the Identity Association for Non-temporary Addresses
 // option as described at https://tools.ietf.org/html/rfc3315#section-22.4
 type OptionIANA struct {
-	IAID    uint32
-	T1      time.Duration // delay before Renew
-	T2      time.Duration // delay before Rebind
-	Options Options
+	optionContainer
+	IAID uint32
+	T1   time.Duration // delay before Renew
+	T2   time.Duration // delay before Rebind
 }
 
 func (o OptionIANA) String() string {
 	output := fmt.Sprintf("IA_NA IAID:%d T1:%d T2:%d", o.IAID, o.T1, o.T2)
-	if len(o.Options) > 0 {
-		output += fmt.Sprintf(" %s", o.Options)
+	if len(o.options) > 0 {
+		output += fmt.Sprintf(" %s", o.options)
 	}
 	return output
 }
@@ -268,7 +268,7 @@ func (o OptionIANA) Len() uint16 {
 	// t1 (4 bytes)
 	// t2 (4 bytes)
 	// any additional options' length
-	return 12 + o.Options.Len()
+	return 12 + o.options.Len()
 }
 
 // Type returns OptionIANA
@@ -291,43 +291,14 @@ func (o *OptionIANA) Marshal() ([]byte, error) {
 	binary.BigEndian.PutUint32(b[8:12], uint32(o.T1))
 	// set T2
 	binary.BigEndian.PutUint32(b[12:16], uint32(o.T2))
-	if len(o.Options) > 0 {
-		optMarshal, err := o.Options.Marshal()
+	if len(o.options) > 0 {
+		optMarshal, err := o.options.Marshal()
 		if err != nil {
 			return nil, err
 		}
 		b = append(b, optMarshal...)
 	}
 	return b, nil
-}
-
-// HasOption returns Option if this IA_NA option has OptionType t as option or
-// nil otherwise
-func (o OptionIANA) HasOption(t OptionType) Option {
-	for _, opt := range o.Options {
-		if opt.Type() == t {
-			return opt
-		}
-	}
-	return nil
-}
-
-// AddOption adds given Option to slice of Options
-func (o *OptionIANA) AddOption(opt Option) {
-	o.Options = append(o.Options, opt)
-}
-
-// SetOption sets given Option to slice of Options, replacing first potential
-// duplicate option of the same type
-func (o *OptionIANA) SetOption(newopt Option) {
-	for i, opt := range o.Options {
-		if opt.Type() == newopt.Type() {
-			o.Options[i] = newopt
-			return
-		}
-	}
-
-	o.AddOption(newopt)
 }
 
 // OptionIAAddress implements the IA Address option as described at
@@ -428,6 +399,8 @@ func (o OptionOptionRequest) HasOption(t OptionType) bool {
 }
 
 // helper function to decode the DHCPv6 options requested in this specific option
+// this is somewhat similar to DecodeOptions, but instead of the entire option
+// here only the option types are decoded
 func (o *OptionOptionRequest) decodeOptions(data []byte) error {
 	var options []OptionType
 	for {
@@ -580,17 +553,45 @@ func (o OptionRapidCommit) Marshal() ([]byte, error) {
 	return b, nil
 }
 
+type optionContainer struct {
+	options Options
+}
+
+// HasOption returns first occurance of option with type t or nil if no options
+// with that type are in Options
+func (o optionContainer) HasOption(t OptionType) Option {
+	for _, opt := range o.options {
+		if opt.Type() == t {
+			return opt
+		}
+	}
+	return nil
+}
+
+// SetOption sets given Option to slice of Options, replacing first potential
+// duplicate option of the same type
+func (o *optionContainer) SetOption(newopt Option) {
+	for i, opt := range o.options {
+		if opt.Type() == newopt.Type() {
+			o.options[i] = newopt
+			return
+		}
+	}
+
+	o.options = append(o.options, newopt)
+}
+
 // OptionNextHop implements the Next Hop option proposed in
 // https://tools.ietf.org/html/draft-ietf-mif-dhcpv6-route-option-05#section-5.1
 type OptionNextHop struct {
+	optionContainer
 	Address net.IP
-	Options Options
 }
 
 func (o OptionNextHop) String() string {
 	output := fmt.Sprintf("next-hop %s", o.Address)
-	if len(o.Options) > 0 {
-		output += fmt.Sprintf(" %s", o.Options)
+	if len(o.options) > 0 {
+		output += fmt.Sprintf(" %s", o.options)
 	}
 
 	return output
@@ -598,7 +599,7 @@ func (o OptionNextHop) String() string {
 
 // Len returns the length in bytes of OptionNextHop's body
 func (o OptionNextHop) Len() uint16 {
-	return 16 + o.Options.Len()
+	return 16 + o.options.Len()
 }
 
 // Type returns OptionTypeNextHop
@@ -616,8 +617,8 @@ func (o OptionNextHop) Marshal() ([]byte, error) {
 	binary.BigEndian.PutUint16(b[2:4], o.Len())
 	// set address
 	b = append(b, o.Address...)
-	if len(o.Options) > 0 {
-		optMarshal, err := o.Options.Marshal()
+	if len(o.options) > 0 {
+		optMarshal, err := o.options.Marshal()
 		if err != nil {
 			return nil, err
 		}
@@ -674,7 +675,7 @@ func DecodeOptions(data []byte) (Options, error) {
 			currentOption.(*OptionIANA).T2 = time.Duration(binary.BigEndian.Uint32(data[12:16]))
 			if optionLen > 12 {
 				var err error
-				currentOption.(*OptionIANA).Options, err = DecodeOptions(data[16 : optionLen+4])
+				currentOption.(*OptionIANA).options, err = DecodeOptions(data[16 : optionLen+4])
 				if err != nil {
 					return list, err
 				}
@@ -725,7 +726,7 @@ func DecodeOptions(data []byte) (Options, error) {
 			}
 			if optionLen > 16 {
 				var err error
-				currentOption.(*OptionNextHop).Options, err = DecodeOptions(data[20 : optionLen+4])
+				currentOption.(*OptionNextHop).options, err = DecodeOptions(data[20 : optionLen+4])
 				if err != nil {
 					return list, err
 				}

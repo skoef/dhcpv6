@@ -269,40 +269,26 @@ func TestOptionIANA(t *testing.T) {
 	}
 
 	// check for 1 IAAddress option within the option
-	if len(opt.Options) != 1 {
-		t.Errorf("expected 1 option, got %d", len(opt.Options))
+	if len(opt.options) != 1 {
+		t.Errorf("expected 1 option, got %d", len(opt.options))
 	}
 	// check type of option
-	if opt.Options[0].Type() != OptionTypeIAAddress {
-		t.Errorf("expected OptionTypeIAAddress, got %s", opt.Options[0].Type())
+	if opt.options[0].Type() != OptionTypeIAAddress {
+		t.Errorf("expected OptionTypeIAAddress, got %s", opt.options[0].Type())
 	}
 
-	// recreate same OptionIANA and see if its marshal matches fixture
-	iaaddr := &OptionIAAddress{
-		Address:           net.ParseIP("fdd4:4732:15d9:ea6a::1000"),
-		PreferredLifetime: 3600,
-		ValidLifetime:     7200,
-	}
-
-	opt = &OptionIANA{
-		IAID:    16423199,
-		T1:      300,
-		T2:      450,
-		Options: Options{iaaddr},
-	}
-	if mshByte, err := opt.Marshal(); err != nil {
-		t.Errorf("error marshalling IANA: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
-		t.Errorf("marshalled IANA didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
-	}
-
-	// do it again but now use the AddOption function of OptionIANA
+	// recreate same OptionIANA including IAAddress option and see if its marshal
+	// matches fixture
 	opt = &OptionIANA{
 		IAID: 16423199,
 		T1:   300,
 		T2:   450,
 	}
-	opt.AddOption(iaaddr)
+	opt.SetOption(&OptionIAAddress{
+		Address:           net.ParseIP("fdd4:4732:15d9:ea6a::1000"),
+		PreferredLifetime: 3600,
+		ValidLifetime:     7200,
+	})
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling IANA: %s", err)
 	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
@@ -332,21 +318,21 @@ func TestOptionIANA(t *testing.T) {
 	}
 	opt.SetOption(newiaddr)
 
-	if len(opt.Options) != 1 {
-		t.Errorf("expected 1 option, got %d options", len(opt.Options))
+	if len(opt.options) != 1 {
+		t.Errorf("expected 1 option, got %d options", len(opt.options))
 	}
 
 	// check if PreferredLifetime (which was 3600) is now 1800
-	if opt.Options[0].(*OptionIAAddress).PreferredLifetime != newiaddr.PreferredLifetime {
-		t.Errorf("expected preferred lifetime of %d, got %d", newiaddr.PreferredLifetime, opt.Options[0].(*OptionIAAddress).PreferredLifetime)
+	if opt.options[0].(*OptionIAAddress).PreferredLifetime != newiaddr.PreferredLifetime {
+		t.Errorf("expected preferred lifetime of %d, got %d", newiaddr.PreferredLifetime, opt.options[0].(*OptionIAAddress).PreferredLifetime)
 	}
 
 	// use SetOption for an option that was not set before and see if it is added
 	// anyway
 	rc := &OptionRapidCommit{}
 	opt.SetOption(rc)
-	if len(opt.Options) != 2 {
-		t.Errorf("expected 2 options, got %d options", len(opt.Options))
+	if len(opt.options) != 2 {
+		t.Errorf("expected 2 options, got %d options", len(opt.options))
 	}
 }
 
