@@ -647,3 +647,51 @@ func TestOptionRapidCommit(t *testing.T) {
 		t.Errorf("marshalled OptionRapidCommit didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 }
+
+func TestOptionNextHop(t *testing.T) {
+	var opt *OptionNextHop
+
+	fixtbyte := []byte{0, 242, 0, 16, 253, 212, 71, 50, 21, 217, 234, 106, 0, 0, 0, 0, 0, 0, 16, 0}
+	// test decoding bytes to []Option
+	if list, err := DecodeOptions(fixtbyte); err != nil {
+		t.Errorf("could not decode fixture: %s", err)
+	} else if len(list) != 1 {
+		t.Errorf("expected exactly 1 option, got %d", len(list))
+	} else {
+		opt = list[0].(*OptionNextHop)
+	}
+
+	// check contents of Option
+	if opt.Type() != OptionTypeNextHop {
+		t.Errorf("unexpected type: %s", opt.Type())
+	}
+
+	// check body length
+	fixtlen := uint16(16)
+	if opt.Len() != fixtlen {
+		t.Errorf("expected length %d, got %d", fixtlen, opt.Len())
+	}
+
+	// test matching output for String()
+	fixtstr := "next-hop fdd4:4732:15d9:ea6a::1000"
+	if fixtstr != opt.String() {
+		t.Errorf("unexpected String() output: %s", opt.String())
+	}
+
+	// test if marshalled bytes match fixture
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionNextHop: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionNextHop didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// create same struct and see if its marshal matches fixture
+	opt = &OptionNextHop{
+		Address: net.ParseIP("fdd4:4732:15d9:ea6a::1000"),
+	}
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionNextHop: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionNextHop didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+}

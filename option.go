@@ -20,6 +20,7 @@ type OptionType uint8
 //  Option types as described in RFC3315 and RFC3646
 const (
 	_ OptionType = iota
+	// RFC3315
 	OptionTypeClientID
 	OptionTypeServerID
 	OptionTypeIANA
@@ -42,8 +43,11 @@ const (
 	OptionTypeReconfigureAccept
 	_
 	_
+	// RFC3646
 	OptionTypeDNSServer
 	OptionTypeDNSSearchList
+	// draft-ietf-mif-dhcpv6-route-option
+	OptionTypeNextHop OptionType = 242
 )
 
 func (t OptionType) String() string {
@@ -574,6 +578,52 @@ func (o OptionRapidCommit) Marshal() ([]byte, error) {
 	return b, nil
 }
 
+// OptionNextHop implements the Next Hop option proposed in
+// https://tools.ietf.org/html/draft-ietf-mif-dhcpv6-route-option-05#section-5.1
+type OptionNextHop struct {
+	Address net.IP
+	Options Options
+}
+
+func (o OptionNextHop) String() string {
+	output := fmt.Sprintf("next-hop %s", o.Address)
+	if len(o.Options) > 0 {
+		output += fmt.Sprintf(" %s", o.Options)
+	}
+
+	return output
+}
+
+// Len returns the length in bytes of OptionNextHop's body
+func (o OptionNextHop) Len() uint16 {
+	return 16 + o.Options.Len()
+}
+
+// Type returns OptionTypeNextHop
+func (o OptionNextHop) Type() OptionType {
+	return OptionTypeNextHop
+}
+
+// Marshal returns byte slice representing this OptionNextHop
+func (o OptionNextHop) Marshal() ([]byte, error) {
+	// prepare byte slice of appropriate length
+	b := make([]byte, 4)
+	// set type
+	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeNextHop))
+	// set length
+	binary.BigEndian.PutUint16(b[2:4], o.Len())
+	// set address
+	b = append(b, o.Address...)
+	if len(o.Options) > 0 {
+		optMarshal, err := o.Options.Marshal()
+		if err != nil {
+			return nil, err
+		}
+		b = append(b, optMarshal...)
+	}
+	return b, nil
+}
+
 // DecodeOptions takes DHCPv6 option bytes and tries to decode every handled
 // option, looking at its type and the given length, and returns a slice
 // containing all decoded structs
@@ -664,6 +714,21 @@ func DecodeOptions(data []byte) (Options, error) {
 			}
 
 			currentOption = &OptionRapidCommit{}
+		case OptionTypeNextHop:
+			if optionLen < 16 {
+				return list, errOptionTooShort
+			}
+			currentOption = &OptionNextHop{
+				Address: data[4:20],
+			}
+			if optionLen > 16 {
+				var err error
+				currentOption.(*OptionIANA).Options, err = DecodeOptions(data[20 : optionLen+4])
+				if err != nil {
+					return list, err
+				}
+			}
+
 		default:
 			fmt.Printf("unhandled option type: %s\n", optionType)
 		}
