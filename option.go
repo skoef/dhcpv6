@@ -95,6 +95,8 @@ func (t OptionType) String() string {
 			return "DNS Server"
 		case OptionTypeDNSSearchList:
 			return "DNS Search List"
+		case OptionTypeNextHop:
+			return "Next Hop"
 		default:
 			return typeUnknown
 		}
@@ -723,7 +725,7 @@ func DecodeOptions(data []byte) (Options, error) {
 			}
 			if optionLen > 16 {
 				var err error
-				currentOption.(*OptionIANA).Options, err = DecodeOptions(data[20 : optionLen+4])
+				currentOption.(*OptionNextHop).Options, err = DecodeOptions(data[20 : optionLen+4])
 				if err != nil {
 					return list, err
 				}

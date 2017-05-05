@@ -36,6 +36,7 @@ func TestOptionTypeString(t *testing.T) {
 		{OptionTypeReconfigureAccept, "Reconfigure Accept (20)"},
 		{OptionTypeDNSServer, "DNS Server (23)"},
 		{OptionTypeDNSSearchList, "DNS Search List (24)"},
+		{OptionTypeNextHop, "Next Hop (242)"},
 	}
 
 	for _, test := range tests {
@@ -665,6 +666,10 @@ func TestOptionNextHop(t *testing.T) {
 	if opt.Type() != OptionTypeNextHop {
 		t.Errorf("unexpected type: %s", opt.Type())
 	}
+	fixtaddr := net.ParseIP("fdd4:4732:15d9:ea6a::1000")
+	if !opt.Address.Equal(fixtaddr) {
+		t.Errorf("expected address %s, got %s", fixtaddr, opt.Address)
+	}
 
 	// check body length
 	fixtlen := uint16(16)
@@ -687,7 +692,7 @@ func TestOptionNextHop(t *testing.T) {
 
 	// create same struct and see if its marshal matches fixture
 	opt = &OptionNextHop{
-		Address: net.ParseIP("fdd4:4732:15d9:ea6a::1000"),
+		Address: fixtaddr,
 	}
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionNextHop: %s", err)
