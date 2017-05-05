@@ -669,7 +669,9 @@ func DecodeOptions(data []byte) (Options, error) {
 		}
 
 		// append last decoded option to list
-		list = append(list, currentOption)
+		if currentOption != nil {
+			list = append(list, currentOption)
+		}
 
 		// chop off bytes and go on to next option
 		if len(data) <= int((4 + optionLen)) {
