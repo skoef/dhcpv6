@@ -47,6 +47,36 @@ func TestOptionTypeString(t *testing.T) {
 	}
 }
 
+func TestAddOption(t *testing.T) {
+	// simply add an option twice to another option and check if it occurs in the
+	// option list twice
+
+	// OptionIANA 'implements' optionContainer
+	iana := &OptionIANA{}
+	fixtlen := 0
+
+	if len(iana.options) != fixtlen {
+		t.Errorf("expected %d options, got %d", fixtlen, len(iana.options))
+	}
+
+	iana.AddOption(&OptionRapidCommit{})
+	fixtlen++
+	if len(iana.options) != fixtlen {
+		t.Errorf("expected %d options, got %d", fixtlen, len(iana.options))
+	}
+
+	iana.AddOption(&OptionRapidCommit{})
+	fixtlen++
+	if len(iana.options) != fixtlen {
+		t.Errorf("expected %d options, got %d", fixtlen, len(iana.options))
+	}
+
+	// check if both options have same type
+	if iana.options[0].Type() != OptionTypeRapidCommit || iana.options[1].Type() != OptionTypeRapidCommit {
+		t.Errorf("expected both options to have type OptionTypeRapidCommit, got %s/%s", iana.options[0].Type(), iana.options[1].Type())
+	}
+}
+
 // test DecodeOptions
 // each separate Option will be tested in their own test
 // but some edges cases in DecodeOptions will be tested here

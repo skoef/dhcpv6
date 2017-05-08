@@ -14,6 +14,43 @@ var (
 	errOptionTooLong  = errors.New("option too long")
 )
 
+// options that contain options themselves can use optionContainer for easy
+// option management
+type optionContainer struct {
+	options Options
+}
+
+// HasOption returns first occurance of option with type t or nil if no options
+// with that type are in Options
+func (o optionContainer) HasOption(t OptionType) Option {
+	for _, opt := range o.options {
+		if opt.Type() == t {
+			return opt
+		}
+	}
+	return nil
+}
+
+// AddOption adds given Option to slice of Options, even if this type occurs in
+// the list already. To prevent duplicate option types in the list, you will
+// probably want to use SetOption instead
+func (o *optionContainer) AddOption(opt Option) {
+	o.options = append(o.options, opt)
+}
+
+// SetOption sets given Option to slice of Options, replacing first potential
+// duplicate option of the same type
+func (o *optionContainer) SetOption(newopt Option) {
+	for i, opt := range o.options {
+		if opt.Type() == newopt.Type() {
+			o.options[i] = newopt
+			return
+		}
+	}
+
+	o.options = append(o.options, newopt)
+}
+
 // OptionType describes DHCPv6 option types
 type OptionType uint8
 
@@ -554,34 +591,6 @@ func (o OptionRapidCommit) Marshal() ([]byte, error) {
 	// setting length is not necessary, it's 0 already
 
 	return b, nil
-}
-
-type optionContainer struct {
-	options Options
-}
-
-// HasOption returns first occurance of option with type t or nil if no options
-// with that type are in Options
-func (o optionContainer) HasOption(t OptionType) Option {
-	for _, opt := range o.options {
-		if opt.Type() == t {
-			return opt
-		}
-	}
-	return nil
-}
-
-// SetOption sets given Option to slice of Options, replacing first potential
-// duplicate option of the same type
-func (o *optionContainer) SetOption(newopt Option) {
-	for i, opt := range o.options {
-		if opt.Type() == newopt.Type() {
-			o.options[i] = newopt
-			return
-		}
-	}
-
-	o.options = append(o.options, newopt)
 }
 
 // OptionNextHop implements the Next Hop option proposed in
