@@ -54,7 +54,8 @@ func (o *optionContainer) SetOption(newopt Option) {
 // OptionType describes DHCPv6 option types
 type OptionType uint8
 
-//  Option types as described in RFC3315 and RFC3646
+// DHCPv6 option types as described in RFC's 3315, 3646, 5970 and a draft for
+// Route Options
 const (
 	_ OptionType = iota
 	// RFC3315
@@ -83,6 +84,9 @@ const (
 	// RFC3646
 	OptionTypeDNSServer
 	OptionTypeDNSSearchList
+	// RFC5970
+	OptionTypeBootFileURL        OptionType = 59
+	OptionTypeBootFileParameters OptionType = 60
 	// draft-ietf-mif-dhcpv6-route-option
 	OptionTypeNextHop     OptionType = 242
 	OptionTypeRoutePrefix OptionType = 243
@@ -133,6 +137,10 @@ func (t OptionType) String() string {
 			return "DNS Server"
 		case OptionTypeDNSSearchList:
 			return "DNS Search List"
+		case OptionTypeBootFileURL:
+			return "Boot File URL"
+		case OptionTypeBootFileParameters:
+			return "Boot File Parameters"
 		case OptionTypeNextHop:
 			return "Next Hop"
 		case OptionTypeRoutePrefix:
@@ -593,6 +601,113 @@ func (o OptionRapidCommit) Marshal() ([]byte, error) {
 	return b, nil
 }
 
+// OptionBootFileURL implements the Boot File URL option described in
+// https://tools.ietf.org/html/rfc5970#section-3.1
+type OptionBootFileURL struct {
+	URL string
+}
+
+func (o OptionBootFileURL) String() string {
+	return fmt.Sprintf("boot-file-url %s", o.URL)
+}
+
+// Len returns the length in bytes of OptionBootFileURL's body
+func (o OptionBootFileURL) Len() uint16 {
+	return uint16(len(o.URL))
+}
+
+// Type returns OptionTypeBootFileURL
+func (o OptionBootFileURL) Type() OptionType {
+	return OptionTypeBootFileURL
+}
+
+// Marshal returns byte slice representing this OptionBootFileURL
+func (o OptionBootFileURL) Marshal() ([]byte, error) {
+	// prepare byte slice of appropriate length
+	b := make([]byte, 4)
+	// set type
+	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeBootFileURL))
+	// set length
+	binary.BigEndian.PutUint16(b[2:4], o.Len())
+	// append string
+	b = append(b, []byte(o.URL)...)
+
+	return b, nil
+}
+
+// OptionBootFileParameters implements the Boot File URL option described in
+// https://tools.ietf.org/html/rfc5970#section-3.2
+type OptionBootFileParameters struct {
+	Parameters []string
+}
+
+func (o OptionBootFileParameters) String() string {
+	output := "boot-file-params"
+	for _, p := range o.Parameters {
+		output += fmt.Sprintf(" %s", p)
+	}
+
+	return output
+}
+
+// Len returns the length in bytes of OptionBootFileParameters's body
+func (o OptionBootFileParameters) Len() uint16 {
+	pl := 0
+	for _, p := range o.Parameters {
+		pl += len(p) + 2 // 2 additional bytes per parameter for parameter length
+	}
+
+	return uint16(pl)
+}
+
+// Type returns OptionTypeBootFileParameters
+func (o OptionBootFileParameters) Type() OptionType {
+	return OptionTypeBootFileParameters
+}
+
+// Marshal returns byte slice representing this OptionBootFileParameters
+func (o OptionBootFileParameters) Marshal() ([]byte, error) {
+	// prepare byte slice of appropriate length
+	b := make([]byte, 4)
+	// set type
+	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeBootFileParameters))
+	// set length
+	binary.BigEndian.PutUint16(b[2:4], o.Len())
+	for _, p := range o.Parameters {
+		pl := make([]byte, 2)
+		binary.BigEndian.PutUint16(pl[0:2], uint16(len(p)))
+		// append parameter length
+		b = append(b, pl...)
+		// append parameter
+		b = append(b, []byte(p)...)
+	}
+
+	return b, nil
+}
+
+// helper function to decode the parameters
+func (o *OptionBootFileParameters) decodeParameters(data []byte) error {
+	params := []string{}
+	for {
+		if len(data) < 2 {
+			// param data too short
+			break
+		}
+
+		pl := binary.BigEndian.Uint16(data[0:2])
+		if uint16(len(data)) < 2+pl {
+			// param body too short
+			break
+		}
+
+		params = append(params, string(data[2:2+pl]))
+		data = data[2+pl:]
+	}
+
+	o.Parameters = params
+	return nil
+}
+
 // OptionNextHop implements the Next Hop option proposed in
 // https://tools.ietf.org/html/draft-ietf-mif-dhcpv6-route-option-05#section-5.1
 type OptionNextHop struct {
@@ -820,6 +935,16 @@ func DecodeOptions(data []byte) (Options, error) {
 			}
 
 			currentOption = &OptionRapidCommit{}
+		case OptionTypeBootFileURL:
+			currentOption = &OptionBootFileURL{}
+			if optionLen > 0 {
+				currentOption.(*OptionBootFileURL).URL = string(data[4 : 4+optionLen])
+			}
+		case OptionTypeBootFileParameters:
+			currentOption = &OptionBootFileParameters{}
+			if optionLen > 0 {
+				currentOption.(*OptionBootFileParameters).decodeParameters(data[4 : 4+optionLen])
+			}
 		case OptionTypeNextHop:
 			if optionLen < 16 {
 				return list, errOptionTooShort

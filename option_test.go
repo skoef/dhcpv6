@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -36,6 +37,8 @@ func TestOptionTypeString(t *testing.T) {
 		{OptionTypeReconfigureAccept, "Reconfigure Accept (20)"},
 		{OptionTypeDNSServer, "DNS Server (23)"},
 		{OptionTypeDNSSearchList, "DNS Search List (24)"},
+		{OptionTypeBootFileURL, "Boot File URL (59)"},
+		{OptionTypeBootFileParameters, "Boot File Parameters (60)"},
 		{OptionTypeNextHop, "Next Hop (242)"},
 		{OptionTypeRoutePrefix, "Route Prefix (243)"},
 	}
@@ -663,6 +666,111 @@ func TestOptionRapidCommit(t *testing.T) {
 		t.Errorf("error marshalling OptionRapidCommit: %s", err)
 	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
 		t.Errorf("marshalled OptionRapidCommit didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+}
+
+func TestOptionBootFileURL(t *testing.T) {
+	var opt *OptionBootFileURL
+
+	fixtbyte := []byte{0, 59, 0, 29, 104, 116, 116, 112, 58, 47, 47, 101, 120, 97, 109, 112, 108, 101, 46, 111, 114, 103, 47, 112, 120, 101, 108, 105, 110, 117, 120, 46, 48}
+	// test decoding bytes to []Option
+	if list, err := DecodeOptions(fixtbyte); err != nil {
+		t.Errorf("could not decode fixture: %s", err)
+	} else if len(list) != 1 {
+		t.Errorf("expected exactly 1 option, got %d", len(list))
+	} else {
+		opt = list[0].(*OptionBootFileURL)
+	}
+
+	// check contents of Option
+	if opt.Type() != OptionTypeBootFileURL {
+		t.Errorf("unexpected type: %s", opt.Type())
+	}
+
+	// check body length
+	fixtlen := uint16(29)
+	if opt.Len() != fixtlen {
+		t.Errorf("expected length %d, got %d", fixtlen, opt.Len())
+	}
+	fixturl := "http://example.org/pxelinux.0"
+	if opt.URL != fixturl {
+		t.Errorf("expected url %s, got %s", fixturl, opt.URL)
+	}
+
+	// test matching output for String()
+	fixtstr := fmt.Sprintf("boot-file-url %s", fixturl)
+	if fixtstr != opt.String() {
+		t.Errorf("unexpected String() output: %s", opt.String())
+	}
+
+	// test if marshalled bytes match fixture
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionBootFileURL: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionBootFileURL didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// create same struct and see if its marshal matches fixture
+	opt = &OptionBootFileURL{
+		URL: fixturl,
+	}
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionBootFileURL: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionBootFileURL didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+}
+
+func TestOptionBootFileParameters(t *testing.T) {
+	var opt *OptionBootFileParameters
+
+	fixtbyte := []byte{0, 60, 0, 18, 0, 3, 102, 111, 111, 0, 3, 98, 97, 114, 0, 6, 102, 111, 111, 98, 97, 114}
+
+	// test decoding bytes to []Option
+	if list, err := DecodeOptions(fixtbyte); err != nil {
+		t.Errorf("could not decode fixture: %s", err)
+	} else if len(list) != 1 {
+		t.Errorf("expected exactly 1 option, got %d", len(list))
+	} else {
+		opt = list[0].(*OptionBootFileParameters)
+	}
+
+	// check contents of Option
+	if opt.Type() != OptionTypeBootFileParameters {
+		t.Errorf("unexpected type: %s", opt.Type())
+	}
+
+	// check body length
+	fixtlen := uint16(18)
+	if opt.Len() != fixtlen {
+		t.Errorf("expected length %d, got %d", fixtlen, opt.Len())
+	}
+	fixtparam := []string{"foo", "bar", "foobar"}
+	if !reflect.DeepEqual(fixtparam, opt.Parameters) {
+		t.Errorf("expected params %s, got %s", fixtparam, opt.Parameters)
+	}
+
+	// test matching output for String()
+	fixtstr := "boot-file-params foo bar foobar"
+	if fixtstr != opt.String() {
+		t.Errorf("unexpected String() output: %s", opt.String())
+	}
+
+	// test if marshalled bytes match fixture
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionBootFileURL: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionBootFileURL didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// create same struct and see if its marshal matches fixture
+	opt = &OptionBootFileParameters{
+		Parameters: fixtparam,
+	}
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionBootFileParameters: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionBootFileParameters didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 }
 
