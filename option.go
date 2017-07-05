@@ -601,6 +601,129 @@ func (o OptionRapidCommit) Marshal() ([]byte, error) {
 	return b, nil
 }
 
+// options that contain class data can use optionContainer for easy
+// encoding/decoding
+type classDataContainer struct {
+	ClassData []string
+}
+
+// helper function to decode the user class data
+func (o *classDataContainer) decodeClassData(data []byte) error {
+	opaque := []string{}
+	for {
+		if len(data) < 2 {
+			// class data too short
+			break
+		}
+
+		pl := binary.BigEndian.Uint16(data[0:2])
+		if uint16(len(data)) < 2+pl {
+			// class data body too short
+			break
+		}
+
+		opaque = append(opaque, string(data[2:2+pl]))
+		data = data[2+pl:]
+	}
+
+	o.ClassData = opaque
+	return nil
+}
+
+func (o classDataContainer) encodeClassData() []byte {
+	b := make([]byte, 0)
+	for _, cd := range o.ClassData {
+		pl := make([]byte, 2)
+		binary.BigEndian.PutUint16(pl[0:2], uint16(len(cd)))
+		// append class data length
+		b = append(b, pl...)
+		// append class data
+		b = append(b, []byte(cd)...)
+	}
+
+	return b
+}
+
+func (o classDataContainer) classDataLen() uint16 {
+	pl := 0
+	for _, cd := range o.ClassData {
+		pl += len(cd) + 2 // 2 additional bytes per parameter for parameter length
+	}
+
+	return uint16(pl)
+}
+
+// OptionUserClass implements the User Class option described in
+// https://tools.ietf.org/html/rfc3315#section-22.15
+type OptionUserClass struct {
+	classDataContainer
+}
+
+func (o OptionUserClass) String() string {
+	return "user-class"
+}
+
+// Len returns the length in bytes of OptionUserClass's body
+func (o OptionUserClass) Len() uint16 {
+	return uint16(o.classDataLen())
+}
+
+// Type returns OptionTypeUserClass
+func (o OptionUserClass) Type() OptionType {
+	return OptionTypeUserClass
+}
+
+// Marshal returns byte slice representing this OptionUserClass
+func (o OptionUserClass) Marshal() ([]byte, error) {
+	// prepare byte slice of appropriate length
+	b := make([]byte, 4)
+	// set type
+	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeUserClass))
+	// set length
+	binary.BigEndian.PutUint16(b[2:4], o.Len())
+	// append user class data
+	b = append(b, o.encodeClassData()...)
+
+	return b, nil
+}
+
+// OptionVendorClass implements the Vendor Class option described in
+// https://tools.ietf.org/html/rfc3315#section-22.16
+type OptionVendorClass struct {
+	classDataContainer
+	EnterpriseNumber uint32
+}
+
+func (o OptionVendorClass) String() string {
+	return "vendor-class"
+}
+
+// Len returns the length in bytes of OptionVendorClass's body
+func (o OptionVendorClass) Len() uint16 {
+	return uint16(o.classDataLen()) + 4 // for EnterpriseNumber
+}
+
+// Type returns OptionTypeVendorClass
+func (o OptionVendorClass) Type() OptionType {
+	return OptionTypeVendorClass
+}
+
+// Marshal returns byte slice representing this OptionVendorClass
+func (o OptionVendorClass) Marshal() ([]byte, error) {
+	// prepare byte slice of appropriate length
+	b := make([]byte, 8)
+	// set type
+	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeVendorClass))
+	// set length
+	binary.BigEndian.PutUint16(b[2:4], o.Len())
+	// set enterprise number
+	binary.BigEndian.PutUint32(b[4:8], o.EnterpriseNumber)
+	// append user class data
+	b = append(b, o.encodeClassData()...)
+
+	return b, nil
+}
+
 // OptionBootFileURL implements the Boot File URL option described in
 // https://tools.ietf.org/html/rfc5970#section-3.1
 type OptionBootFileURL struct {
@@ -935,6 +1058,18 @@ func DecodeOptions(data []byte) (Options, error) {
 			}
 
 			currentOption = &OptionRapidCommit{}
+		case OptionTypeUserClass:
+			currentOption = &OptionUserClass{}
+			if optionLen > 0 {
+				currentOption.(*OptionUserClass).decodeClassData(data[4 : 4+optionLen])
+			}
+		case OptionTypeVendorClass:
+			currentOption = &OptionVendorClass{
+				EnterpriseNumber: binary.BigEndian.Uint32(data[4:8]),
+			}
+			if optionLen > 4 {
+				currentOption.(*OptionVendorClass).decodeClassData(data[8 : 4+optionLen])
+			}
 		case OptionTypeBootFileURL:
 			currentOption = &OptionBootFileURL{}
 			if optionLen > 0 {

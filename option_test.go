@@ -669,6 +669,102 @@ func TestOptionRapidCommit(t *testing.T) {
 	}
 }
 
+func TestOptionUserClass(t *testing.T) {
+	var opt *OptionUserClass
+
+	fixtbyte := []byte{0, 15, 0, 6, 0, 4, 116, 101, 115, 116}
+	// test decoding bytes to []Option
+	if list, err := DecodeOptions(fixtbyte); err != nil {
+		t.Errorf("could not decode fixture: %s", err)
+	} else if len(list) != 1 {
+		t.Errorf("expected exactly 1 option, got %d", len(list))
+	} else {
+		opt = list[0].(*OptionUserClass)
+	}
+
+	// check contents of Option
+	if opt.Type() != OptionTypeUserClass {
+		t.Errorf("unexpected type: %s", opt.Type())
+	}
+
+	// check body length
+	fixtlen := uint16(6)
+	if opt.Len() != fixtlen {
+		t.Errorf("expected length %d, got %d", fixtlen, opt.Len())
+	}
+
+	// test matching output for String()
+	fixtstr := "user-class"
+	if fixtstr != opt.String() {
+		t.Errorf("unexpected String() output: %s", opt.String())
+	}
+
+	// test if marshalled bytes match fixture
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionUserClass: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionUserClass didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// create same struct and see if its marshal matches fixture
+	opt = &OptionUserClass{}
+	opt.ClassData = []string{"test"}
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionUserClass: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionUserClass didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+}
+
+func TestOptionVendorClass(t *testing.T) {
+	var opt *OptionVendorClass
+
+	fixtbyte := []byte{0, 16, 0, 18, 0, 0, 0, 42, 0, 6, 102, 111, 111, 98, 97, 114, 0, 4, 116, 101, 115, 116}
+	// test decoding bytes to []Option
+	if list, err := DecodeOptions(fixtbyte); err != nil {
+		t.Errorf("could not decode fixture: %s", err)
+	} else if len(list) != 1 {
+		t.Errorf("expected exactly 1 option, got %d", len(list))
+	} else {
+		opt = list[0].(*OptionVendorClass)
+	}
+
+	// check contents of Option
+	if opt.Type() != OptionTypeVendorClass {
+		t.Errorf("unexpected type: %s", opt.Type())
+	}
+
+	// check body length
+	fixtlen := uint16(18)
+	if opt.Len() != fixtlen {
+		t.Errorf("expected length %d, got %d", fixtlen, opt.Len())
+	}
+
+	// test matching output for String()
+	fixtstr := "vendor-class"
+	if fixtstr != opt.String() {
+		t.Errorf("unexpected String() output: %s", opt.String())
+	}
+
+	// test if marshalled bytes match fixture
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionVendorClass: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionVendorClass didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// create same struct and see if its marshal matches fixture
+	opt = &OptionVendorClass{
+		EnterpriseNumber: 42,
+	}
+	opt.ClassData = []string{"foobar", "test"}
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionVendorClass: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionVendorClass didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+}
+
 func TestOptionBootFileURL(t *testing.T) {
 	var opt *OptionBootFileURL
 
