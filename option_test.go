@@ -694,7 +694,7 @@ func TestOptionUserClass(t *testing.T) {
 	}
 
 	// test matching output for String()
-	fixtstr := "user-class"
+	fixtstr := "user-class test"
 	if fixtstr != opt.String() {
 		t.Errorf("unexpected String() output: %s", opt.String())
 	}
@@ -741,7 +741,7 @@ func TestOptionVendorClass(t *testing.T) {
 	}
 
 	// test matching output for String()
-	fixtstr := "vendor-class"
+	fixtstr := "vendor-class foobar, test"
 	if fixtstr != opt.String() {
 		t.Errorf("unexpected String() output: %s", opt.String())
 	}

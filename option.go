@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 )
 
@@ -660,7 +661,7 @@ type OptionUserClass struct {
 }
 
 func (o OptionUserClass) String() string {
-	return "user-class"
+	return fmt.Sprintf("user-class %s", strings.Join(o.ClassData, ", "))
 }
 
 // Len returns the length in bytes of OptionUserClass's body
@@ -695,7 +696,7 @@ type OptionVendorClass struct {
 }
 
 func (o OptionVendorClass) String() string {
-	return "vendor-class"
+	return fmt.Sprintf("vendor-class %s", strings.Join(o.ClassData, ", "))
 }
 
 // Len returns the length in bytes of OptionVendorClass's body
