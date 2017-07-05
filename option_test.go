@@ -739,6 +739,10 @@ func TestOptionVendorClass(t *testing.T) {
 	if opt.Len() != fixtlen {
 		t.Errorf("expected length %d, got %d", fixtlen, opt.Len())
 	}
+	fixten := uint32(42)
+	if opt.EnterpriseNumber != fixten {
+		t.Errorf("expected enterprise number %d, got %d", fixten, opt.EnterpriseNumber)
+	}
 
 	// test matching output for String()
 	fixtstr := "vendor-class foobar, test"
@@ -755,7 +759,7 @@ func TestOptionVendorClass(t *testing.T) {
 
 	// create same struct and see if its marshal matches fixture
 	opt = &OptionVendorClass{
-		EnterpriseNumber: 42,
+		EnterpriseNumber: fixten,
 	}
 	opt.ClassData = []string{"foobar", "test"}
 	if mshByte, err := opt.Marshal(); err != nil {
