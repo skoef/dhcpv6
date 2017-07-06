@@ -858,9 +858,9 @@ func TestOptionBootFileParameters(t *testing.T) {
 
 	// test if marshalled bytes match fixture
 	if mshByte, err := opt.Marshal(); err != nil {
-		t.Errorf("error marshalling OptionBootFileURL: %s", err)
+		t.Errorf("error marshalling OptionBootFileParameters: %s", err)
 	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
-		t.Errorf("marshalled OptionBootFileURL didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+		t.Errorf("marshalled OptionBootFileParameters didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
 	// create same struct and see if its marshal matches fixture
