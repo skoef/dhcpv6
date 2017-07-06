@@ -874,6 +874,87 @@ func TestOptionBootFileParameters(t *testing.T) {
 	}
 }
 
+func TestOptionClientSystemArchitectureType(t *testing.T) {
+	var opt *OptionClientSystemArchitectureType
+
+	fixtbyte := []byte{0, 61, 0, 2, 0, 0}
+
+	// test decoding bytes to []Option
+	if list, err := DecodeOptions(fixtbyte); err != nil {
+		t.Errorf("could not decode fixture: %s", err)
+	} else if len(list) != 1 {
+		t.Errorf("expected exactly 1 option, got %d", len(list))
+	} else {
+		opt = list[0].(*OptionClientSystemArchitectureType)
+	}
+
+	// check contents of Option
+	if opt.Type() != OptionTypeClientSystemArchitectureType {
+		t.Errorf("unexpected type: %s", opt.Type())
+	}
+
+	// check body length
+	fixtlen := uint16(2)
+	if opt.Len() != fixtlen {
+		t.Errorf("expected length %d, got %d", fixtlen, opt.Len())
+	}
+	if len(opt.Types) != 1 {
+		t.Errorf("expected type length 1, got %d", len(opt.Types))
+	}
+	fixttype := ArchitectureTypeIntelx86PC
+	if opt.Types[0] != fixttype {
+		t.Errorf("expected type %s, got %s", fixttype, opt.Types[0])
+	}
+
+	// test matching output for String()
+	fixtstr := "client-system-architecture-type [Intel x86PC (0)]"
+	if fixtstr != opt.String() {
+		t.Errorf("unexpected String() output: %s", opt.String())
+	}
+
+	// test if marshalled bytes match fixture
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionClientSystemArchitectureType: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionClientSystemArchitectureType didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// create same struct and see if its marshal matches fixture
+	opt = &OptionClientSystemArchitectureType{
+		Types: []ArchitectureType{fixttype},
+	}
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionClientSystemArchitectureType: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionClientSystemArchitectureType didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+}
+
+func TestArchitectureTypeString(t *testing.T) {
+	tests := []struct {
+		in  ArchitectureType
+		out string
+	}{
+		{ArchitectureTypeIntelx86PC, "Intel x86PC (0)"},
+		{ArchitectureTypeNECPC98, "NEC/PC98 (1)"},
+		{ArchitectureTypeEFIItanium, "EFI Itanium (2)"},
+		{ArchitectureTypeDECAlpha, "DEC Alpha (3)"},
+		{ArchitectureTypeArcx86, "Arc x86 (4)"},
+		{ArchitectureTypeIntelLeanClient, "Intel Lean Client (5)"},
+		{ArchitectureTypeEFIIA32, "EFI IA32 (6)"},
+		{ArchitectureTypeEFIBC, "EFI BC (7)"},
+		{ArchitectureTypeEFIXscale, "EFI Xscale (8)"},
+		{ArchitectureTypeEFIx8664, "EFI x86-64 (9)"},
+		{255, "Unknown (255)"},
+	}
+
+	for _, test := range tests {
+		if strings.Compare(test.in.String(), test.out) != 0 {
+			t.Errorf("expected %s but got %s", test.out, test.in.String())
+		}
+	}
+}
+
 func TestOptionNextHop(t *testing.T) {
 	var opt *OptionNextHop
 

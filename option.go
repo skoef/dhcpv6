@@ -86,8 +86,9 @@ const (
 	OptionTypeDNSServer
 	OptionTypeDNSSearchList
 	// RFC5970
-	OptionTypeBootFileURL        OptionType = 59
-	OptionTypeBootFileParameters OptionType = 60
+	OptionTypeBootFileURL                  OptionType = 59
+	OptionTypeBootFileParameters           OptionType = 60
+	OptionTypeClientSystemArchitectureType OptionType = 61
 	// draft-ietf-mif-dhcpv6-route-option
 	OptionTypeNextHop     OptionType = 242
 	OptionTypeRoutePrefix OptionType = 243
@@ -527,7 +528,7 @@ func (s StatusCode) String() string {
 		case StatusCodeUseMulticast:
 			return "UseMulticast"
 		default:
-			return "Unknown"
+			return typeUnknown
 		}
 	}
 
@@ -832,6 +833,92 @@ func (o *OptionBootFileParameters) decodeParameters(data []byte) error {
 	return nil
 }
 
+type ArchitectureType uint16
+
+// Architecture types as described at https://tools.ietf.org/html/rfc4578#section-2.1
+const (
+	ArchitectureTypeIntelx86PC ArchitectureType = iota
+	ArchitectureTypeNECPC98
+	ArchitectureTypeEFIItanium
+	ArchitectureTypeDECAlpha
+	ArchitectureTypeArcx86
+	ArchitectureTypeIntelLeanClient
+	ArchitectureTypeEFIIA32
+	ArchitectureTypeEFIBC
+	ArchitectureTypeEFIXscale
+	ArchitectureTypeEFIx8664
+)
+
+func (s ArchitectureType) String() string {
+	name := func() string {
+		switch s {
+		case ArchitectureTypeIntelx86PC:
+			return "Intel x86PC"
+		case ArchitectureTypeNECPC98:
+			return "NEC/PC98"
+		case ArchitectureTypeEFIItanium:
+			return "EFI Itanium"
+		case ArchitectureTypeDECAlpha:
+			return "DEC Alpha"
+		case ArchitectureTypeArcx86:
+			return "Arc x86"
+		case ArchitectureTypeIntelLeanClient:
+			return "Intel Lean Client"
+		case ArchitectureTypeEFIIA32:
+			return "EFI IA32"
+		case ArchitectureTypeEFIBC:
+			return "EFI BC"
+		case ArchitectureTypeEFIXscale:
+			return "EFI Xscale"
+		case ArchitectureTypeEFIx8664:
+			return "EFI x86-64"
+		default:
+			return typeUnknown
+		}
+	}
+
+	return fmt.Sprintf("%s (%d)", name(), s)
+}
+
+// OptionClientSystemArchitectureType implements the Client System
+// Architecture Type option as described in
+// https://tools.ietf.org/html/rfc5970#section-3.3
+type OptionClientSystemArchitectureType struct {
+	Types []ArchitectureType
+}
+
+func (o OptionClientSystemArchitectureType) String() string {
+	return fmt.Sprintf("client-system-architecture-type %s", o.Types)
+}
+
+// Len returns the length in bytes of OptionClientSystemArchitectureType's body
+func (o OptionClientSystemArchitectureType) Len() uint16 {
+	return uint16(2 * len(o.Types))
+}
+
+// Type returns OptionTypeClientSystemArchitectureType
+func (o OptionClientSystemArchitectureType) Type() OptionType {
+	return OptionTypeClientSystemArchitectureType
+}
+
+// Marshal returns byte slice representing this OptionClientSystemArchitectureType
+func (o OptionClientSystemArchitectureType) Marshal() ([]byte, error) {
+	// prepare byte slice of appropriate length
+	b := make([]byte, 4)
+	// set type
+	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeClientSystemArchitectureType))
+	// set length
+	binary.BigEndian.PutUint16(b[2:4], o.Len())
+	// append types
+	for _, t := range o.Types {
+		tb := make([]byte, 2)
+		binary.BigEndian.PutUint16(tb[0:2], uint16(t))
+		b = append(b, tb...)
+	}
+
+	return b, nil
+}
+
 // OptionNextHop implements the Next Hop option proposed in
 // https://tools.ietf.org/html/draft-ietf-mif-dhcpv6-route-option-05#section-5.1
 type OptionNextHop struct {
@@ -898,7 +985,7 @@ func (s RoutePreference) String() string {
 		case RoutePreferenceLow:
 			return "Low"
 		default:
-			return "Unknown"
+			return typeUnknown
 		}
 	}
 
@@ -1080,6 +1167,15 @@ func DecodeOptions(data []byte) (Options, error) {
 			currentOption = &OptionBootFileParameters{}
 			if optionLen > 0 {
 				currentOption.(*OptionBootFileParameters).decodeParameters(data[4 : 4+optionLen])
+			}
+		case OptionTypeClientSystemArchitectureType:
+			currentOption = &OptionClientSystemArchitectureType{}
+			if optionLen > 0 {
+				at := make([]ArchitectureType, 0)
+				for i := uint16(0); i < optionLen; i += 2 {
+					at = append(at, ArchitectureType(binary.BigEndian.Uint16(data[4+i:6+i])))
+				}
+				currentOption.(*OptionClientSystemArchitectureType).Types = at
 			}
 		case OptionTypeNextHop:
 			if optionLen < 16 {
