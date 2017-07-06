@@ -368,6 +368,18 @@ func TestOptionIANA(t *testing.T) {
 	if len(opt.options) != 2 {
 		t.Errorf("expected 2 options, got %d options", len(opt.options))
 	}
+
+	// try to decode fixture with too short option length
+	fixtbyte[3] = 11
+	// test decoding bytes to []Option
+	if _, err := DecodeOptions(fixtbyte); err == nil {
+		t.Error("expected error while decoding too short option")
+	} else {
+		fixterr := errOptionTooShort
+		if err != fixterr {
+			t.Errorf("expected option too short error, got %s", err)
+		}
+	}
 }
 
 func TestOptionIAAddress(t *testing.T) {
@@ -428,6 +440,18 @@ func TestOptionIAAddress(t *testing.T) {
 		t.Errorf("error marshalling IAAddress: %s", err)
 	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
 		t.Errorf("marshalled IAAddress didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// try to decode fixture with too short option length
+	fixtbyte[3] = 23
+	// test decoding bytes to []Option
+	if _, err := DecodeOptions(fixtbyte); err == nil {
+		t.Error("expected error while decoding too short option")
+	} else {
+		fixterr := errOptionTooShort
+		if err != fixterr {
+			t.Errorf("expected option too short error, got %s", err)
+		}
 	}
 }
 
@@ -543,6 +567,30 @@ func TestOptionElapsedTime(t *testing.T) {
 	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
 		t.Errorf("marshalled OptionElapsedTime didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
+
+	// try to decode fixture with too short option length
+	fixtbyte[3] = 1
+	// test decoding bytes to []Option
+	if _, err := DecodeOptions(fixtbyte); err == nil {
+		t.Error("expected error while decoding too short option")
+	} else {
+		fixterr := errOptionTooShort
+		if err != fixterr {
+			t.Errorf("expected option too short error, got %s", err)
+		}
+	}
+
+	// try to decode fixture with too long option length
+	fixtbyte = []byte{0, 8, 0, 3, 0, 10, 1}
+	// test decoding bytes to []Option
+	if _, err := DecodeOptions(fixtbyte); err == nil {
+		t.Error("expected error while decoding too short option")
+	} else {
+		fixterr := errOptionTooLong
+		if err != fixterr {
+			t.Errorf("expected option too long error, got %s", err)
+		}
+	}
 }
 
 func TestOptionStatusCode(t *testing.T) {
@@ -599,6 +647,18 @@ func TestOptionStatusCode(t *testing.T) {
 		t.Errorf("error marshalling OptionStatusCode: %s", err)
 	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
 		t.Errorf("marshalled OptionStatusCode didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// try to decode fixture with too short option length
+	fixtbyte[3] = 1
+	// test decoding bytes to []Option
+	if _, err := DecodeOptions(fixtbyte); err == nil {
+		t.Error("expected error while decoding too short option")
+	} else {
+		fixterr := errOptionTooShort
+		if err != fixterr {
+			t.Errorf("expected option too short error, got %s", err)
+		}
 	}
 }
 
@@ -666,6 +726,18 @@ func TestOptionRapidCommit(t *testing.T) {
 		t.Errorf("error marshalling OptionRapidCommit: %s", err)
 	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
 		t.Errorf("marshalled OptionRapidCommit didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// try to decode fixture with too long option length
+	fixtbyte = []byte{0, 14, 0, 1, 1}
+	// test decoding bytes to []Option
+	if _, err := DecodeOptions(fixtbyte); err == nil {
+		t.Error("expected error while decoding too short option")
+	} else {
+		fixterr := errOptionTooLong
+		if err != fixterr {
+			t.Errorf("expected option too long error, got %s", err)
+		}
 	}
 }
 
@@ -1018,7 +1090,7 @@ func TestOptionClientNetworkInterfaceIdentifier(t *testing.T) {
 	}
 
 	// try to decode fixture with too short option length
-	fixtbyte = []byte{0, 62, 0, 2, 1, 2}
+	fixtbyte[3] = 2
 	// test decoding bytes to []Option
 	if _, err := DecodeOptions(fixtbyte); err == nil {
 		t.Error("expected error while decoding too short option")
@@ -1127,6 +1199,18 @@ func TestOptionNextHop(t *testing.T) {
 	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
 		t.Errorf("marshalled OptionNextHop didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
+
+	// try to decode fixture with too short option length
+	fixtbyte[3] = 21
+	// test decoding bytes to []Option
+	if _, err := DecodeOptions(fixtbyte); err == nil {
+		t.Error("expected error while decoding too short option")
+	} else {
+		fixterr := errOptionTooShort
+		if err != fixterr {
+			t.Errorf("expected option too short error, got %s", err)
+		}
+	}
 }
 
 func TestOptionRoutePrefix(t *testing.T) {
@@ -1214,6 +1298,18 @@ func TestOptionRoutePrefix(t *testing.T) {
 		t.Errorf("error marshalling OptionRoutePrefix: %s", err)
 	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
 		t.Errorf("marshalled OptionRoutePrefix didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// try to decode fixture with too short option length
+	fixtbyte[3] = 14
+	// test decoding bytes to []Option
+	if _, err := DecodeOptions(fixtbyte); err == nil {
+		t.Error("expected error while decoding too short option")
+	} else {
+		fixterr := errOptionTooShort
+		if err != fixterr {
+			t.Errorf("expected option too short error, got %s", err)
+		}
 	}
 }
 

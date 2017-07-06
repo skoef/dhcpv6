@@ -1188,8 +1188,11 @@ func DecodeOptions(data []byte) (Options, error) {
 				currentOption.(*OptionOptionRequest).decodeOptions(data[4 : 4+optionLen])
 			}
 		case OptionTypeElapsedTime:
-			if optionLen != 2 {
+			if optionLen < 2 {
 				return list, errOptionTooShort
+			}
+			if optionLen > 2 {
+				return list, errOptionTooLong
 			}
 			currentOption = &OptionElapsedTime{
 				// RFC3315 describes elapsed time is expressed in hundredths of a second
