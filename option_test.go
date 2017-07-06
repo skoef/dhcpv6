@@ -955,6 +955,97 @@ func TestArchitectureTypeString(t *testing.T) {
 	}
 }
 
+func TestOptionClientNetworkInterfaceIdentifier(t *testing.T) {
+	var opt *OptionClientNetworkInterfaceIdentifier
+
+	fixtbyte := []byte{0, 62, 0, 3, 1, 2, 1}
+
+	// test decoding bytes to []Option
+	if list, err := DecodeOptions(fixtbyte); err != nil {
+		t.Errorf("could not decode fixture: %s", err)
+	} else if len(list) != 1 {
+		t.Errorf("expected exactly 1 option, got %d", len(list))
+	} else {
+		opt = list[0].(*OptionClientNetworkInterfaceIdentifier)
+	}
+
+	// check contents of Option
+	if opt.Type() != OptionTypeClientNetworkInterfaceIdentifier {
+		t.Errorf("unexpected type: %s", opt.Type())
+	}
+
+	// check body length
+	fixtlen := uint16(3)
+	if opt.Len() != fixtlen {
+		t.Errorf("expected length %d, got %d", fixtlen, opt.Len())
+	}
+	fixttype := InterfaceTypeUNDI
+	if opt.InterfaceType != fixttype {
+		t.Errorf("expected type %d, got %d", fixttype, opt.InterfaceType)
+	}
+	fixtrevmaj := uint8(2)
+	if opt.RevisionMajor != fixtrevmaj {
+		t.Errorf("expected major revision %d, got %d", fixtrevmaj, opt.RevisionMajor)
+	}
+	fixtrevmin := uint8(1)
+	if opt.RevisionMinor != fixtrevmin {
+		t.Errorf("expected minor revision %d, got %d", fixtrevmin, opt.RevisionMinor)
+	}
+
+	// test matching output for String()
+	fixtstr := "client-network-interface-identifier Universal Network Device Interface (UNDI) (1): 2.1"
+	if fixtstr != opt.String() {
+		t.Errorf("unexpected String() output: %s", opt.String())
+	}
+
+	// test if marshalled bytes match fixture
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionClientNetworkInterfaceIdentifier: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionClientNetworkInterfaceIdentifier didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// create same struct and see if its marshal matches fixture
+	opt = &OptionClientNetworkInterfaceIdentifier{
+		InterfaceType: fixttype,
+		RevisionMajor: fixtrevmaj,
+		RevisionMinor: fixtrevmin,
+	}
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionClientNetworkInterfaceIdentifier: %s", err)
+	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+		t.Errorf("marshalled OptionClientNetworkInterfaceIdentifier didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// try to decode fixture with too short option length
+	fixtbyte = []byte{0, 62, 0, 2, 1, 2}
+	// test decoding bytes to []Option
+	if _, err := DecodeOptions(fixtbyte); err == nil {
+		t.Error("expected error while decoding too short option")
+	} else {
+		fixterr := errOptionTooShort
+		if err != fixterr {
+			t.Errorf("expected option too short error, got %s", err)
+		}
+	}
+}
+
+func TestInterfaceTypeString(t *testing.T) {
+	tests := []struct {
+		in  InterfaceType
+		out string
+	}{
+		{InterfaceTypeUNDI, "Universal Network Device Interface (UNDI) (1)"},
+		{255, "Unknown (255)"},
+	}
+
+	for _, test := range tests {
+		if strings.Compare(test.in.String(), test.out) != 0 {
+			t.Errorf("expected %s but got %s", test.out, test.in.String())
+		}
+	}
+}
+
 func TestOptionNextHop(t *testing.T) {
 	var opt *OptionNextHop
 

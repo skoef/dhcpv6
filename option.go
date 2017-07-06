@@ -86,9 +86,10 @@ const (
 	OptionTypeDNSServer
 	OptionTypeDNSSearchList
 	// RFC5970
-	OptionTypeBootFileURL                  OptionType = 59
-	OptionTypeBootFileParameters           OptionType = 60
-	OptionTypeClientSystemArchitectureType OptionType = 61
+	OptionTypeBootFileURL                      OptionType = 59
+	OptionTypeBootFileParameters               OptionType = 60
+	OptionTypeClientSystemArchitectureType     OptionType = 61
+	OptionTypeClientNetworkInterfaceIdentifier OptionType = 62
 	// draft-ietf-mif-dhcpv6-route-option
 	OptionTypeNextHop     OptionType = 242
 	OptionTypeRoutePrefix OptionType = 243
@@ -919,6 +920,69 @@ func (o OptionClientSystemArchitectureType) Marshal() ([]byte, error) {
 	return b, nil
 }
 
+type InterfaceType uint8
+
+// Interface types as described at https://tools.ietf.org/html/rfc4578#section-2.2
+const (
+	_ InterfaceType = iota
+	InterfaceTypeUNDI
+)
+
+func (s InterfaceType) String() string {
+	name := func() string {
+		switch s {
+		case InterfaceTypeUNDI:
+			return "Universal Network Device Interface (UNDI)"
+		default:
+			return typeUnknown
+		}
+	}
+
+	return fmt.Sprintf("%s (%d)", name(), s)
+}
+
+// OptionClientNetworkInterfaceIdentifier implements the Client Network
+// Interface Identifier option as described in
+// https://tools.ietf.org/html/rfc5970#section-3.4
+type OptionClientNetworkInterfaceIdentifier struct {
+	InterfaceType InterfaceType
+	RevisionMajor uint8
+	RevisionMinor uint8
+}
+
+func (o OptionClientNetworkInterfaceIdentifier) String() string {
+	return fmt.Sprintf("client-network-interface-identifier %s: %d.%d",
+		o.InterfaceType, o.RevisionMajor, o.RevisionMinor)
+}
+
+// Len returns the length in bytes of OptionClientNetworkInterfaceIdentifier's
+// body
+func (o OptionClientNetworkInterfaceIdentifier) Len() uint16 {
+	return 3 // static length
+}
+
+// Type returns OptionTypeClientNetworkInterfaceIdentifier
+func (o OptionClientNetworkInterfaceIdentifier) Type() OptionType {
+	return OptionTypeClientNetworkInterfaceIdentifier
+}
+
+// Marshal returns byte slice representing this
+// OptionTypeClientNetworkInterfaceIdentifier
+func (o OptionClientNetworkInterfaceIdentifier) Marshal() ([]byte, error) {
+	// prepare byte slice of appropriate length
+	b := make([]byte, 7)
+	// set type
+	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeClientNetworkInterfaceIdentifier))
+	// set length
+	binary.BigEndian.PutUint16(b[2:4], o.Len())
+	// set type, major and minor revision
+	b[4] = uint8(o.InterfaceType)
+	b[5] = o.RevisionMajor
+	b[6] = o.RevisionMinor
+
+	return b, nil
+}
+
 // OptionNextHop implements the Next Hop option proposed in
 // https://tools.ietf.org/html/draft-ietf-mif-dhcpv6-route-option-05#section-5.1
 type OptionNextHop struct {
@@ -1176,6 +1240,15 @@ func DecodeOptions(data []byte) (Options, error) {
 					at = append(at, ArchitectureType(binary.BigEndian.Uint16(data[4+i:6+i])))
 				}
 				currentOption.(*OptionClientSystemArchitectureType).Types = at
+			}
+		case OptionTypeClientNetworkInterfaceIdentifier:
+			if optionLen != 3 {
+				return list, errOptionTooShort
+			}
+			currentOption = &OptionClientNetworkInterfaceIdentifier{
+				InterfaceType: InterfaceType(data[4]),
+				RevisionMajor: data[5],
+				RevisionMinor: data[6],
 			}
 		case OptionTypeNextHop:
 			if optionLen < 16 {
