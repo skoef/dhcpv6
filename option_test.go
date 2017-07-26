@@ -101,6 +101,14 @@ func TestDecodeOptions(t *testing.T) {
 	} else if err != errOptionTooShort {
 		t.Errorf("unexpected error: %s", err)
 	}
+
+	// try to decode an unhandled option
+	fixtbyte = make([]byte, 4)
+	if list, err := DecodeOptions(fixtbyte); err != nil {
+		t.Errorf("unexpected error while trying to decode unhandled option type: %s", err.Error())
+	} else if len(list) != 0 {
+		t.Errorf("expected empty list, got %d entries", len(list))
+	}
 }
 
 // test OptionClientID
