@@ -393,7 +393,7 @@ func TestOptionIANA(t *testing.T) {
 func TestOptionIAAddress(t *testing.T) {
 	var opt *OptionIAAddress
 
-	fixtbyte := []byte{0, 5, 0, 24, 253, 212, 71, 50, 21, 217, 234, 106, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 14, 16, 0, 0, 28, 32}
+	fixtbyte := []byte{0, 5, 0, 36, 253, 212, 71, 50, 21, 217, 234, 106, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 14, 16, 0, 0, 28, 32, 0, 13, 0, 8, 0, 0, 102, 111, 111, 98, 97, 114}
 	// test decoding bytes to []Option
 	if list, err := DecodeOptions(fixtbyte); err != nil {
 		t.Errorf("could not decode fixture: %s", err)
@@ -417,15 +417,18 @@ func TestOptionIAAddress(t *testing.T) {
 	if opt.ValidLifetime != 7200 {
 		t.Errorf("expected valid lifetime 7200, got %d", opt.ValidLifetime)
 	}
+	if sc := opt.HasOption(OptionTypeStatusCode); sc == nil {
+		t.Error("expected status code option")
+	}
 
 	// check body length
-	fixtlen := uint16(24)
+	fixtlen := uint16(36)
 	if opt.Len() != fixtlen {
 		t.Errorf("expected length %d, got %d", fixtlen, opt.Len())
 	}
 
 	// test matching output for String()
-	fixtstr := "IA_ADDR fdd4:4732:15d9:ea6a::1000 pltime:3600 vltime:7200"
+	fixtstr := "IA_ADDR fdd4:4732:15d9:ea6a::1000 pltime:3600 vltime:7200 [status-code Success (0): foobar]"
 	if fixtstr != opt.String() {
 		t.Errorf("unexpected String() output: %s", opt.String())
 	}
@@ -437,12 +440,16 @@ func TestOptionIAAddress(t *testing.T) {
 		t.Errorf("marshalled IAAddress didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
-	// create same OptionClientID and see if its marshal matches fixture
+	// create same OptionIAAddress and see if its marshal matches fixture
 	opt = &OptionIAAddress{
 		Address:           fixtaddr,
 		PreferredLifetime: 3600,
 		ValidLifetime:     7200,
 	}
+	opt.AddOption(&OptionStatusCode{
+		Code:    StatusCodeSuccess,
+		Message: "foobar",
+	})
 
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling IAAddress: %s", err)

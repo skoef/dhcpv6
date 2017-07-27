@@ -355,14 +355,19 @@ func (o *OptionIANA) Marshal() ([]byte, error) {
 // OptionIAAddress implements the IA Address option as described at
 // https://tools.ietf.org/html/rfc3315#section-22.6
 type OptionIAAddress struct {
+	optionContainer
 	Address           net.IP
 	PreferredLifetime time.Duration
 	ValidLifetime     time.Duration
-	// TODO: options
 }
 
 func (o OptionIAAddress) String() string {
-	return fmt.Sprintf("IA_ADDR %s pltime:%d vltime:%d", o.Address, o.PreferredLifetime, o.ValidLifetime)
+	output := fmt.Sprintf("IA_ADDR %s pltime:%d vltime:%d", o.Address, o.PreferredLifetime, o.ValidLifetime)
+	if len(o.options) > 0 {
+		output += fmt.Sprintf(" %s", o.options)
+	}
+
+	return output
 }
 
 // Type returns OptionTypeIAAddress
@@ -375,8 +380,8 @@ func (o OptionIAAddress) Len() uint16 {
 	// preferred lifetime (4 bytes)
 	// valid lifetime (4 bytes)
 	// address (16 bytes)
-	// TODO: any additional options' length
-	return 24
+	// any additional options' length
+	return 24 + o.options.Len()
 }
 
 // Marshal returns byte slice representing this OptionIAAddress
@@ -396,6 +401,14 @@ func (o OptionIAAddress) Marshal() ([]byte, error) {
 	// set valid time
 	binary.BigEndian.PutUint32(t[4:8], uint32(o.ValidLifetime))
 	b = append(b, t...)
+	// append any options
+	if len(o.options) > 0 {
+		optMarshal, err := o.options.Marshal()
+		if err != nil {
+			return nil, err
+		}
+		b = append(b, optMarshal...)
+	}
 	return b, nil
 }
 
@@ -1181,6 +1194,13 @@ func DecodeOptions(data []byte) (Options, error) {
 				Address:           data[4:20],
 				PreferredLifetime: time.Duration(binary.BigEndian.Uint32(data[20:24])),
 				ValidLifetime:     time.Duration(binary.BigEndian.Uint32(data[24:28])),
+			}
+			if optionLen > 32 {
+				var err error
+				currentOption.(*OptionIAAddress).options, err = DecodeOptions(data[28 : optionLen+4])
+				if err != nil {
+					return list, err
+				}
 			}
 		case OptionTypeOptionRequest:
 			currentOption = &OptionOptionRequest{}
