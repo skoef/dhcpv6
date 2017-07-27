@@ -260,12 +260,17 @@ func TestOptionIANA(t *testing.T) {
 	if opt.Type() != OptionTypeIANA {
 		t.Errorf("unexpected type: %s", opt.Type())
 	}
-	// TODO: check IAID
-	if opt.T1 != 300 {
-		t.Errorf("expected T1 300, got %d", opt.T1)
+	fixtiaid := uint32(16423199)
+	if opt.IAID != fixtiaid {
+		t.Errorf("expected IAID %d, got %d", fixtiaid, opt.IAID)
 	}
-	if opt.T2 != 450 {
-		t.Errorf("expected T2 450, got %d", opt.T2)
+	fixtt1 := time.Duration(300)
+	if opt.T1 != fixtt1 {
+		t.Errorf("expected T1 %d, got %d", fixtt1, opt.T1)
+	}
+	fixtt2 := time.Duration(450)
+	if opt.T2 != fixtt2 {
+		t.Errorf("expected T2 %d, got %d", fixtt2, opt.T2)
 	}
 
 	// check body length
@@ -289,9 +294,9 @@ func TestOptionIANA(t *testing.T) {
 
 	// recreate same OptionIANA and see if its marshal matches fixture
 	opt = &OptionIANA{
-		IAID: 16423199,
-		T1:   300,
-		T2:   450,
+		IAID: fixtiaid,
+		T1:   fixtt1,
+		T2:   fixtt2,
 	}
 
 	if mshByte, err := opt.Marshal(); err != nil {
@@ -322,9 +327,9 @@ func TestOptionIANA(t *testing.T) {
 	// recreate same OptionIANA including IAAddress option and see if its marshal
 	// matches fixture
 	opt = &OptionIANA{
-		IAID: 16423199,
-		T1:   300,
-		T2:   450,
+		IAID: fixtiaid,
+		T1:   fixtt1,
+		T2:   fixtt2,
 	}
 	opt.SetOption(&OptionIAAddress{
 		Address:           net.ParseIP("fdd4:4732:15d9:ea6a::1000"),
