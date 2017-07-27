@@ -342,6 +342,7 @@ func (o *OptionIANA) Marshal() ([]byte, error) {
 	binary.BigEndian.PutUint32(b[8:12], uint32(o.T1))
 	// set T2
 	binary.BigEndian.PutUint32(b[12:16], uint32(o.T2))
+	// append any options
 	if len(o.options) > 0 {
 		optMarshal, err := o.options.Marshal()
 		if err != nil {
@@ -1032,6 +1033,7 @@ func (o OptionNextHop) Marshal() ([]byte, error) {
 	binary.BigEndian.PutUint16(b[2:4], o.Len())
 	// set address
 	b = append(b, o.Address...)
+	// append any options
 	if len(o.options) > 0 {
 		optMarshal, err := o.options.Marshal()
 		if err != nil {
@@ -1121,7 +1123,7 @@ func (o OptionRoutePrefix) Marshal() ([]byte, error) {
 	}
 	// append prefix
 	b = append(b, o.Prefix...)
-	// add options
+	// append any options
 	if len(o.options) > 0 {
 		optMarshal, err := o.options.Marshal()
 		if err != nil {
