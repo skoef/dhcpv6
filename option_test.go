@@ -1254,7 +1254,7 @@ func TestOptionNextHop(t *testing.T) {
 func TestOptionRoutePrefix(t *testing.T) {
 	var opt *OptionRoutePrefix
 
-	fixtbyte := []byte{0, 243, 0, 22, 0, 0, 14, 16, 64, 24, 253, 212, 71, 50, 21, 217, 234, 106, 0, 0, 0, 0, 0, 0, 0, 0}
+	fixtbyte := []byte{0, 243, 0, 34, 0, 0, 14, 16, 64, 24, 253, 212, 71, 50, 21, 217, 234, 106, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 0, 8, 0, 0, 102, 111, 111, 98, 97, 114}
 	// test decoding bytes to []Option
 	if list, err := DecodeOptions(fixtbyte); err != nil {
 		t.Errorf("could not decode fixture: %s", err)
@@ -1284,15 +1284,18 @@ func TestOptionRoutePrefix(t *testing.T) {
 	if !opt.Prefix.Equal(fixtprefix) {
 		t.Errorf("expected prefix %s, got %s", fixtprefix, opt.Prefix)
 	}
+	if sc := opt.HasOption(OptionTypeStatusCode); sc == nil {
+		t.Error("expected status code option")
+	}
 
 	// check body length
-	fixtlen := uint16(22)
+	fixtlen := uint16(34)
 	if opt.Len() != fixtlen {
 		t.Errorf("expected length %d, got %d", fixtlen, opt.Len())
 	}
 
 	// test matching output for String()
-	fixtstr := fmt.Sprintf("route-prefix %s/%d", fixtprefix, fixtpl)
+	fixtstr := fmt.Sprintf("route-prefix %s/%d [status-code Success (0): foobar]", fixtprefix, fixtpl)
 	if fixtstr != opt.String() {
 		t.Errorf("unexpected String() output: %s", opt.String())
 	}
@@ -1312,6 +1315,10 @@ func TestOptionRoutePrefix(t *testing.T) {
 		Metric:        10,
 		Prefix:        fixtprefix,
 	}
+	opt.AddOption(&OptionStatusCode{
+		Code:    StatusCodeSuccess,
+		Message: "foobar",
+	})
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionRoutePrefix: %s", err)
 	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
