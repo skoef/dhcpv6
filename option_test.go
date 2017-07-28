@@ -806,6 +806,15 @@ func TestOptionUserClass(t *testing.T) {
 	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
 		t.Errorf("marshalled OptionUserClass didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
+
+	// test parameter length checking in parsing class data
+	// mess up the length of the first string so decoding breaks
+	// and we end up with no class data
+	fixtbyte[5] = 5
+	opt.decodeClassData(fixtbyte[4:])
+	if len(opt.ClassData) != 0 {
+		t.Errorf("option should have 0 pieces of class data, but has %d", len(opt.ClassData))
+	}
 }
 
 func TestOptionVendorClass(t *testing.T) {
@@ -963,6 +972,15 @@ func TestOptionBootFileParameters(t *testing.T) {
 		t.Errorf("error marshalling OptionBootFileParameters: %s", err)
 	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
 		t.Errorf("marshalled OptionBootFileParameters didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+
+	// test parameter length checking in parsing parameters
+	// mess up the length of the first parameter so decoding breaks
+	// and we end up with an empty set of parameters
+	fixtbyte[5] = 17
+	opt.decodeParameters(fixtbyte[4:])
+	if len(opt.Parameters) != 0 {
+		t.Errorf("option should have 0 parameters but has %d", len(opt.Parameters))
 	}
 }
 
@@ -1221,7 +1239,7 @@ func TestOptionNextHop(t *testing.T) {
 	}
 
 	// try to decode fixture with too short option length
-	fixtbyte[3] = 21
+	fixtbyte[3] = 15
 	// test decoding bytes to []Option
 	if _, err := DecodeOptions(fixtbyte); err == nil {
 		t.Error("expected error while decoding too short option")
