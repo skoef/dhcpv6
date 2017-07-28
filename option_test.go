@@ -241,6 +241,33 @@ func TestOptionServerID(t *testing.T) {
 	} else if err != errDUIDTooShort {
 		t.Errorf("unexpected error: %s", err)
 	}
+
+	// test matching 2 OptionServerID's to eachother
+
+	// should not be equal (different type)
+	if opt.Equal(OptionClientID{}) {
+		t.Error("ServerID should not be equal to ClientID")
+	}
+
+	// should not be equal (different content)
+	noteql := OptionServerID{
+		DUID: &DUIDLL{},
+	}
+	if opt.Equal(noteql) {
+		t.Error("ServerID should not be equal to ServerID with different DUID")
+	}
+
+	// should be equal (similar content)
+	eql := &OptionServerID{
+		DUID: &DUIDLLT{
+			HardwareType: 1,
+			Time:         time.Unix(1446771200, 0),
+		},
+	}
+	eql.DUID.(*DUIDLLT).LinkLayerAddress, _ = net.ParseMAC("aa:bb:cc:dd:ee:ff")
+	if !opt.Equal(eql) {
+		t.Error("ServerID should be equal to ServerID with similar content")
+	}
 }
 
 func TestOptionIANA(t *testing.T) {
