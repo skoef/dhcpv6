@@ -291,11 +291,11 @@ func TestOptionIANA(t *testing.T) {
 	if opt.IAID != fixtiaid {
 		t.Errorf("expected IAID %d, got %d", fixtiaid, opt.IAID)
 	}
-	fixtt1 := time.Duration(300)
+	fixtt1 := 300 * time.Second
 	if opt.T1 != fixtt1 {
 		t.Errorf("expected T1 %d, got %d", fixtt1, opt.T1)
 	}
-	fixtt2 := time.Duration(450)
+	fixtt2 := 450 * time.Second
 	if opt.T2 != fixtt2 {
 		t.Errorf("expected T2 %d, got %d", fixtt2, opt.T2)
 	}
@@ -307,7 +307,7 @@ func TestOptionIANA(t *testing.T) {
 	}
 
 	// test matching output for String()
-	fixtstr := "IA_NA IAID:16423199 T1:300 T2:450"
+	fixtstr := "IA_NA IAID:16423199 T1:5m0s T2:7m30s"
 	if fixtstr != opt.String() {
 		t.Errorf("unexpected String() output: %s", opt.String())
 	}
@@ -379,7 +379,7 @@ func TestOptionIANA(t *testing.T) {
 	}
 
 	// test matching output for String()
-	fixtstr = "IA_NA IAID:16423199 T1:300 T2:450 [IA_ADDR fdd4:4732:15d9:ea6a::1000 pltime:3600 vltime:7200]"
+	fixtstr = "IA_NA IAID:16423199 T1:5m0s T2:7m30s [IA_ADDR fdd4:4732:15d9:ea6a::1000 pltime:3600 vltime:7200]"
 	if fixtstr != opt.String() {
 		t.Errorf("unexpected String() output: %s", opt.String())
 	}

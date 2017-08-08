@@ -306,7 +306,7 @@ type OptionIANA struct {
 }
 
 func (o OptionIANA) String() string {
-	output := fmt.Sprintf("IA_NA IAID:%d T1:%d T2:%d", o.IAID, o.T1, o.T2)
+	output := fmt.Sprintf("IA_NA IAID:%d T1:%s T2:%s", o.IAID, o.T1, o.T2)
 	if len(o.options) > 0 {
 		output += fmt.Sprintf(" %s", o.options)
 	}
@@ -339,9 +339,9 @@ func (o *OptionIANA) Marshal() ([]byte, error) {
 	// set IAID
 	binary.BigEndian.PutUint32(b[4:8], o.IAID)
 	// set T1
-	binary.BigEndian.PutUint32(b[8:12], uint32(o.T1))
+	binary.BigEndian.PutUint32(b[8:12], uint32(o.T1.Seconds()))
 	// set T2
-	binary.BigEndian.PutUint32(b[12:16], uint32(o.T2))
+	binary.BigEndian.PutUint32(b[12:16], uint32(o.T2.Seconds()))
 	// append any options
 	if len(o.options) > 0 {
 		optMarshal, err := o.options.Marshal()
@@ -1179,8 +1179,8 @@ func DecodeOptions(data []byte) (Options, error) {
 			}
 			currentOption = &OptionIANA{}
 			currentOption.(*OptionIANA).IAID = binary.BigEndian.Uint32(data[4:8])
-			currentOption.(*OptionIANA).T1 = time.Duration(binary.BigEndian.Uint32(data[8:12]))
-			currentOption.(*OptionIANA).T2 = time.Duration(binary.BigEndian.Uint32(data[12:16]))
+			currentOption.(*OptionIANA).T1 = time.Duration(binary.BigEndian.Uint32(data[8:12])) * time.Second
+			currentOption.(*OptionIANA).T2 = time.Duration(binary.BigEndian.Uint32(data[12:16])) * time.Second
 			if optionLen > 12 {
 				var err error
 				currentOption.(*OptionIANA).options, err = DecodeOptions(data[16 : optionLen+4])
