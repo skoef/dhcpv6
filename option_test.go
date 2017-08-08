@@ -360,8 +360,8 @@ func TestOptionIANA(t *testing.T) {
 	}
 	opt.SetOption(&OptionIAAddress{
 		Address:           net.ParseIP("fdd4:4732:15d9:ea6a::1000"),
-		PreferredLifetime: 3600,
-		ValidLifetime:     7200,
+		PreferredLifetime: 3600 * time.Second,
+		ValidLifetime:     7200 * time.Second,
 	})
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling IANA: %s", err)
@@ -379,7 +379,7 @@ func TestOptionIANA(t *testing.T) {
 	}
 
 	// test matching output for String()
-	fixtstr = "IA_NA IAID:16423199 T1:5m0s T2:7m30s [IA_ADDR fdd4:4732:15d9:ea6a::1000 pltime:3600 vltime:7200]"
+	fixtstr = "IA_NA IAID:16423199 T1:5m0s T2:7m30s [IA_ADDR fdd4:4732:15d9:ea6a::1000 pltime:1h0m0s vltime:2h0m0s]"
 	if fixtstr != opt.String() {
 		t.Errorf("unexpected String() output: %s", opt.String())
 	}
@@ -387,8 +387,8 @@ func TestOptionIANA(t *testing.T) {
 	// override IAAddress option and test if it was replaced instead of added
 	newiaddr := &OptionIAAddress{
 		Address:           net.ParseIP("fdd4:4732:15d9:ea6a::1000"),
-		PreferredLifetime: 1800,
-		ValidLifetime:     7200,
+		PreferredLifetime: 1800 * time.Second,
+		ValidLifetime:     7200 * time.Second,
 	}
 	opt.SetOption(newiaddr)
 
@@ -443,10 +443,12 @@ func TestOptionIAAddress(t *testing.T) {
 	if !fixtaddr.Equal(opt.Address) {
 		t.Errorf("expected address %s, got %s", fixtaddr, opt.Address)
 	}
-	if opt.PreferredLifetime != 3600 {
+	fixtpl := 3600 * time.Second
+	if opt.PreferredLifetime != fixtpl {
 		t.Errorf("expected preferred lifetime 3600, got %d", opt.PreferredLifetime)
 	}
-	if opt.ValidLifetime != 7200 {
+	fixtvl := 7200 * time.Second
+	if opt.ValidLifetime != fixtvl {
 		t.Errorf("expected valid lifetime 7200, got %d", opt.ValidLifetime)
 	}
 	if sc := opt.HasOption(OptionTypeStatusCode); sc == nil {
@@ -460,7 +462,7 @@ func TestOptionIAAddress(t *testing.T) {
 	}
 
 	// test matching output for String()
-	fixtstr := "IA_ADDR fdd4:4732:15d9:ea6a::1000 pltime:3600 vltime:7200 [status-code Success (0): foobar]"
+	fixtstr := "IA_ADDR fdd4:4732:15d9:ea6a::1000 pltime:1h0m0s vltime:2h0m0s [status-code Success (0): foobar]"
 	if fixtstr != opt.String() {
 		t.Errorf("unexpected String() output: %s", opt.String())
 	}
@@ -475,8 +477,8 @@ func TestOptionIAAddress(t *testing.T) {
 	// create same OptionIAAddress and see if its marshal matches fixture
 	opt = &OptionIAAddress{
 		Address:           fixtaddr,
-		PreferredLifetime: 3600,
-		ValidLifetime:     7200,
+		PreferredLifetime: fixtpl,
+		ValidLifetime:     fixtvl,
 	}
 	opt.AddOption(&OptionStatusCode{
 		Code:    StatusCodeSuccess,

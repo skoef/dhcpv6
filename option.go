@@ -363,7 +363,7 @@ type OptionIAAddress struct {
 }
 
 func (o OptionIAAddress) String() string {
-	output := fmt.Sprintf("IA_ADDR %s pltime:%d vltime:%d", o.Address, o.PreferredLifetime, o.ValidLifetime)
+	output := fmt.Sprintf("IA_ADDR %s pltime:%s vltime:%s", o.Address, o.PreferredLifetime, o.ValidLifetime)
 	if len(o.options) > 0 {
 		output += fmt.Sprintf(" %s", o.options)
 	}
@@ -398,9 +398,9 @@ func (o OptionIAAddress) Marshal() ([]byte, error) {
 	b = append(b, o.Address...)
 	t := make([]byte, 8)
 	// set preferred time
-	binary.BigEndian.PutUint32(t[0:4], uint32(o.PreferredLifetime))
+	binary.BigEndian.PutUint32(t[0:4], uint32(o.PreferredLifetime.Seconds()))
 	// set valid time
-	binary.BigEndian.PutUint32(t[4:8], uint32(o.ValidLifetime))
+	binary.BigEndian.PutUint32(t[4:8], uint32(o.ValidLifetime.Seconds()))
 	b = append(b, t...)
 	// append any options
 	if len(o.options) > 0 {
@@ -1194,8 +1194,8 @@ func DecodeOptions(data []byte) (Options, error) {
 			}
 			currentOption = &OptionIAAddress{
 				Address:           data[4:20],
-				PreferredLifetime: time.Duration(binary.BigEndian.Uint32(data[20:24])),
-				ValidLifetime:     time.Duration(binary.BigEndian.Uint32(data[24:28])),
+				PreferredLifetime: time.Duration(binary.BigEndian.Uint32(data[20:24])) * time.Second,
+				ValidLifetime:     time.Duration(binary.BigEndian.Uint32(data[24:28])) * time.Second,
 			}
 			if optionLen > 32 {
 				var err error
