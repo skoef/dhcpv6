@@ -44,6 +44,43 @@ func TestDUIDDecode(t *testing.T) {
 	}
 }
 
+func TestDuidEN(t *testing.T) {
+	fixtbyte := []byte{0, 2, 0, 0, 0, 9, 12, 192, 132, 221, 3, 0, 9, 18}
+	duid, err := DecodeDUID(fixtbyte)
+	if err != nil {
+		t.Errorf("error decoding fixture: %s", err)
+	}
+
+	duiden := duid.(*DUIDEN)
+	// check contents of duid
+	if duiden.Type() != DUIDTypeEN {
+		t.Errorf("expected duid type %d, got %d", DUIDTypeEN, duiden.Type())
+	}
+	fixtenum := uint32(9)
+	if duiden.EnterpriseNumber != fixtenum {
+		t.Errorf("expected enterprise number %d, got %d", fixtenum, duiden.EnterpriseNumber)
+	}
+
+	// test matching output for String()
+	fixtstr := "enterprise number 9 (id: 0cc084dd03000912)"
+	if duiden.String() != fixtstr {
+		t.Errorf("unexpected String() output: %s", duiden.String())
+	}
+
+	// test matching output for Len()
+	fixtlen := uint16(14)
+	if duiden.Len() != fixtlen {
+		t.Errorf("expected Len of %d, got %d", fixtlen, duiden.Len())
+	}
+
+	// test if marshalled bytes match fixture
+	if mshByte, err := duiden.Marshal(); err != nil {
+		t.Errorf("error marshalling DUID: %s", err)
+	} else if !bytes.Equal(fixtbyte, mshByte) {
+		t.Errorf("marshalled DUID didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+}
+
 func TestDuidLLT(t *testing.T) {
 	// test decoding bytes to DUIDLLT
 	fixtbyte := []byte{0, 1, 0, 1, 29, 205, 101, 0, 170, 187, 204, 221, 238, 255}

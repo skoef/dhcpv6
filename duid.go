@@ -107,6 +107,34 @@ type DUIDEN struct {
 	ID               []byte
 }
 
+// Len returns length in bytes for entire DUIDEN
+func (d DUIDEN) Len() uint16 {
+	return 6 + uint16(len(d.ID))
+}
+
+func (d DUIDEN) String() string {
+	return fmt.Sprintf("enterprise number %d (id: %x)", d.EnterpriseNumber, d.ID)
+}
+
+// Type returns DUIDTypeEN
+func (DUIDEN) Type() DUIDType {
+	return DUIDTypeEN
+}
+
+func (d DUIDEN) Marshal() ([]byte, error) {
+	// prepare byte slice of appropriate length
+	// ID will be appended later
+	b := make([]byte, 6) // type, enterprise number
+
+	// set type
+	binary.BigEndian.PutUint16(b[0:2], uint16(d.Type()))
+	// set enterprise number
+	binary.BigEndian.PutUint32(b[2:6], d.EnterpriseNumber)
+	// append ID
+	b = append(b, d.ID...)
+	return b, nil
+}
+
 // DUIDLL - as described in https://tools.ietf.org/html/rfc3315#section-9.4
 type DUIDLL struct {
 	HardwareType     uint16
@@ -233,6 +261,12 @@ func DecodeDUID(data []byte) (DUID, error) {
 		if err := currentDUID.(*DUIDUUID).UUID.UnmarshalBinary(data[2:18]); err != nil {
 			return currentDUID, err
 		}
+	case DUIDTypeEN:
+		currentDUID = &DUIDEN{
+			EnterpriseNumber: binary.BigEndian.Uint32(data[2:6]),
+			ID:               data[6:],
+		}
+
 	default:
 		return currentDUID, fmt.Errorf("unhandled DUIDType %s", duidType)
 	}
