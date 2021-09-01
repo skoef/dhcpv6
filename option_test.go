@@ -894,8 +894,34 @@ func TestOptionVendorClass(t *testing.T) {
 	opt.ClassData = []string{"foobar", "test"}
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionVendorClass: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionVendorClass didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
+	}
+}
+
+func TestOptionDNSServer(t *testing.T) {
+	opt := &OptionDNSServer{
+		Servers: []net.IP{net.ParseIP("fe80::1"), net.ParseIP("fe80::2")},
+	}
+
+	// check body length
+	fixtlen := uint16(32)
+	if opt.Len() != fixtlen {
+		t.Errorf("expected length %d, got %d", fixtlen, opt.Len())
+	}
+
+	// test matching output for String()
+	fixtstr := "DNS-recursive-name-server fe80::1,fe80::2"
+	if fixtstr != opt.String() {
+		t.Errorf("unexpected String() output: %s", opt.String())
+	}
+
+	fixtbyte := []byte{0, 23, 0, 32, 254, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 254, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2}
+	// test if marshalled bytes match fixture
+	if mshByte, err := opt.Marshal(); err != nil {
+		t.Errorf("error marshalling OptionDNSServer: %s", err)
+	} else if !bytes.Equal(mshByte, fixtbyte) {
+		t.Errorf("marshalled OptionDNSServer didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 }
 
