@@ -3,7 +3,6 @@ package dhcpv6
 import (
 	"bytes"
 	"net"
-	"strings"
 	"testing"
 	"time"
 
@@ -23,7 +22,7 @@ func TestDUIDTypeString(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if strings.Compare(test.in.String(), test.out) != 0 {
+		if test.in.String() != test.out {
 			t.Errorf("expected %s but got %s", test.out, test.in.String())
 		}
 	}
@@ -68,7 +67,7 @@ func TestDuidLLT(t *testing.T) {
 		t.Errorf("expected time %s, got %s", fixttime, duidllt.Time)
 	}
 	fixtmac, _ := net.ParseMAC("aa:bb:cc:dd:ee:ff")
-	if bytes.Compare(duidllt.LinkLayerAddress, fixtmac) != 0 {
+	if !bytes.Equal(duidllt.LinkLayerAddress, fixtmac) {
 		t.Errorf("expected lla %s, got %s", fixtmac, duidllt.LinkLayerAddress)
 	}
 
@@ -94,7 +93,7 @@ func TestDuidLLT(t *testing.T) {
 	// test if marshalled bytes match fixture
 	if mshByte, err := duidllt.Marshal(); err != nil {
 		t.Errorf("error marshalling DUID: %s", err)
-	} else if bytes.Compare(fixtbyte, mshByte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled DUID didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -106,7 +105,7 @@ func TestDuidLLT(t *testing.T) {
 	}
 	if mshByte, err := duidllt.Marshal(); err != nil {
 		t.Errorf("error marshalling DUID: %s", err)
-	} else if bytes.Compare(fixtbyte, mshByte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled DUID didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 }
@@ -129,7 +128,7 @@ func TestDuidLL(t *testing.T) {
 		t.Errorf("expected hw type %d, got %d", fixthwtype, duidll.HardwareType)
 	}
 	fixtmac, _ := net.ParseMAC("aa:bb:cc:dd:ee:ff")
-	if bytes.Compare(duidll.LinkLayerAddress, fixtmac) != 0 {
+	if !bytes.Equal(duidll.LinkLayerAddress, fixtmac) {
 		t.Errorf("expected lla %s, got %s", fixtmac, duidll.LinkLayerAddress)
 	}
 
@@ -155,7 +154,7 @@ func TestDuidLL(t *testing.T) {
 	// test if marshalled bytes match fixture
 	if mshByte, err := duidll.Marshal(); err != nil {
 		t.Errorf("error marshalling DUID: %s", err)
-	} else if bytes.Compare(fixtbyte, mshByte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled DUID didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -166,7 +165,7 @@ func TestDuidLL(t *testing.T) {
 	}
 	if mshByte, err := duidll.Marshal(); err != nil {
 		t.Errorf("error marshalling DUID: %s", err)
-	} else if bytes.Compare(fixtbyte, mshByte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled DUID didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 }
@@ -212,7 +211,7 @@ func TestDuidUUID(t *testing.T) {
 	// test if marshalled bytes match fixture
 	if mshByte, merr := duiduuid.Marshal(); merr != nil {
 		t.Errorf("error marshalling DUID: %s", merr)
-	} else if bytes.Compare(fixtbyte, mshByte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled DUID didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -223,7 +222,7 @@ func TestDuidUUID(t *testing.T) {
 	}
 	if mshByte, err := duiduuid.Marshal(); err != nil {
 		t.Errorf("error marshalling DUID: %s", err)
-	} else if bytes.Compare(fixtbyte, mshByte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled DUID didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 }

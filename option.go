@@ -293,7 +293,7 @@ func (o OptionServerID) Equal(opt Option) bool {
 		return false
 	}
 
-	return bytes.Compare(optb, myb) == 0
+	return bytes.Equal(optb, myb)
 }
 
 // OptionIANA implements the Identity Association for Non-temporary Addresses
@@ -737,6 +737,46 @@ func (o OptionVendorClass) Marshal() ([]byte, error) {
 	binary.BigEndian.PutUint32(b[4:8], o.EnterpriseNumber)
 	// append user class data
 	b = append(b, o.encodeClassData()...)
+
+	return b, nil
+}
+
+// OptionDNSServer implements the DNS Server option described in
+// https://tools.ietf.org/html/rfc3646#section-3
+type OptionDNSServer struct {
+	Servers []net.IP
+}
+
+func (o OptionDNSServer) String() string {
+	servers := make([]string, len(o.Servers))
+	for i, server := range o.Servers {
+		servers[i] = server.String()
+	}
+	return fmt.Sprintf("DNS-recursive-name-server %s", strings.Join(servers, ","))
+}
+
+// Len returns the length in bytes of OptionDNSServer's body
+func (o OptionDNSServer) Len() uint16 {
+	return uint16(len(o.Servers) * 16)
+}
+
+// Type returns OptionTypeDNSServer
+func (o OptionDNSServer) Type() OptionType {
+	return OptionTypeDNSServer
+}
+
+// Marshal returns byte slice representing this OptionDNSServer
+func (o OptionDNSServer) Marshal() ([]byte, error) {
+	// prepare byte slice of appropriate length
+	b := make([]byte, 4+(len(o.Servers)*16))
+	// set type
+	binary.BigEndian.PutUint16(b[0:2], uint16(OptionTypeDNSServer))
+	// set length
+	binary.BigEndian.PutUint16(b[2:4], o.Len())
+	// append nameservers
+	for i, server := range o.Servers {
+		copy(b[(i*16)+4:(i*16)+20], server.To16())
+	}
 
 	return b, nil
 }
