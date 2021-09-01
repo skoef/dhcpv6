@@ -293,7 +293,7 @@ func (o OptionServerID) Equal(opt Option) bool {
 		return false
 	}
 
-	return bytes.Compare(optb, myb) == 0
+	return bytes.Equal(optb, myb)
 }
 
 // OptionIANA implements the Identity Association for Non-temporary Addresses

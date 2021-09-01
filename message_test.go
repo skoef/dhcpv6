@@ -110,7 +110,7 @@ func TestDecodeMessage(t *testing.T) {
 		// check if marshal matches
 		if mshByte, err := msg.Marshal(); err != nil {
 			t.Errorf("error marshalling message: %s", err)
-		} else if bytes.Compare(mshByte, test.fixture) != 0 {
+		} else if !bytes.Equal(mshByte, test.fixture) {
 			t.Errorf("marshalled message didn't match fixture!\nfixture: %v\nmarshal: %v", test.fixture, mshByte)
 		}
 	}

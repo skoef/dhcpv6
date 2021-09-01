@@ -150,7 +150,7 @@ func TestOptionClientID(t *testing.T) {
 	// test if marshalled bytes match fixture
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling ClientID: %s", err)
-	} else if bytes.Compare(fixtbyte, mshByte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled ClientID didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -164,7 +164,7 @@ func TestOptionClientID(t *testing.T) {
 	opt.DUID.(*DUIDLLT).LinkLayerAddress, _ = net.ParseMAC("aa:bb:cc:dd:ee:ff")
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling ClientID: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled ClientID didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -216,7 +216,7 @@ func TestOptionServerID(t *testing.T) {
 	// test if marshalled bytes match fixture
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling ServerID: %s", err)
-	} else if bytes.Compare(fixtbyte, mshByte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled ServerID didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -230,7 +230,7 @@ func TestOptionServerID(t *testing.T) {
 	opt.DUID.(*DUIDLLT).LinkLayerAddress, _ = net.ParseMAC("aa:bb:cc:dd:ee:ff")
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling ServerID: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled ServerID didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -315,7 +315,7 @@ func TestOptionIANA(t *testing.T) {
 	// test if marshalled bytes match fixture
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling IANA: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled IANA didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -328,7 +328,7 @@ func TestOptionIANA(t *testing.T) {
 
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling IANA: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled IANA didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -365,7 +365,7 @@ func TestOptionIANA(t *testing.T) {
 	})
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling IANA: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled IANA didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -470,7 +470,7 @@ func TestOptionIAAddress(t *testing.T) {
 	// test if marshalled bytes match fixture
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling IAAddress: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled IAAddress didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -487,7 +487,7 @@ func TestOptionIAAddress(t *testing.T) {
 
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling IAAddress: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled IAAddress didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -546,7 +546,7 @@ func TestOptionOptionRequest(t *testing.T) {
 	// test if marshalled bytes match fixture
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionRequest: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionRequest didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -560,7 +560,7 @@ func TestOptionOptionRequest(t *testing.T) {
 
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionRequest: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionRequest didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 }
@@ -603,7 +603,7 @@ func TestOptionElapsedTime(t *testing.T) {
 	// test if marshalled bytes match fixture
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionElapsedTime: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionElapsedTime didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -613,7 +613,7 @@ func TestOptionElapsedTime(t *testing.T) {
 	}
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionElapsedTime: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionElapsedTime didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -683,7 +683,7 @@ func TestOptionStatusCode(t *testing.T) {
 	// test if marshalled bytes match fixture
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionStatusCode: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionStatusCode didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -694,7 +694,7 @@ func TestOptionStatusCode(t *testing.T) {
 	}
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionStatusCode: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionStatusCode didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -765,7 +765,7 @@ func TestOptionRapidCommit(t *testing.T) {
 	// test if marshalled bytes match fixture
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionRapidCommit: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionRapidCommit didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -773,7 +773,7 @@ func TestOptionRapidCommit(t *testing.T) {
 	opt = &OptionRapidCommit{}
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionRapidCommit: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionRapidCommit didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -823,7 +823,7 @@ func TestOptionUserClass(t *testing.T) {
 	// test if marshalled bytes match fixture
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionUserClass: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionUserClass didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -832,7 +832,7 @@ func TestOptionUserClass(t *testing.T) {
 	opt.ClassData = []string{"test"}
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionUserClass: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionUserClass didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -883,7 +883,7 @@ func TestOptionVendorClass(t *testing.T) {
 	// test if marshalled bytes match fixture
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionVendorClass: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionVendorClass didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -962,7 +962,7 @@ func TestOptionBootFileURL(t *testing.T) {
 	// test if marshalled bytes match fixture
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionBootFileURL: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionBootFileURL didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -972,7 +972,7 @@ func TestOptionBootFileURL(t *testing.T) {
 	}
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionBootFileURL: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionBootFileURL didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 }
@@ -1015,7 +1015,7 @@ func TestOptionBootFileParameters(t *testing.T) {
 	// test if marshalled bytes match fixture
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionBootFileParameters: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionBootFileParameters didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -1025,7 +1025,7 @@ func TestOptionBootFileParameters(t *testing.T) {
 	}
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionBootFileParameters: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionBootFileParameters didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -1080,7 +1080,7 @@ func TestOptionClientSystemArchitectureType(t *testing.T) {
 	// test if marshalled bytes match fixture
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionClientSystemArchitectureType: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionClientSystemArchitectureType didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -1090,7 +1090,7 @@ func TestOptionClientSystemArchitectureType(t *testing.T) {
 	}
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionClientSystemArchitectureType: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionClientSystemArchitectureType didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 }
@@ -1166,7 +1166,7 @@ func TestOptionClientNetworkInterfaceIdentifier(t *testing.T) {
 	// test if marshalled bytes match fixture
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionClientNetworkInterfaceIdentifier: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionClientNetworkInterfaceIdentifier didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -1178,7 +1178,7 @@ func TestOptionClientNetworkInterfaceIdentifier(t *testing.T) {
 	}
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionClientNetworkInterfaceIdentifier: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionClientNetworkInterfaceIdentifier didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -1248,7 +1248,7 @@ func TestOptionNextHop(t *testing.T) {
 	// test if marshalled bytes match fixture
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionNextHop: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionNextHop didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -1258,7 +1258,7 @@ func TestOptionNextHop(t *testing.T) {
 	}
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionNextHop: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionNextHop didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -1289,7 +1289,7 @@ func TestOptionNextHop(t *testing.T) {
 
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionNextHop: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionNextHop didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -1358,7 +1358,7 @@ func TestOptionRoutePrefix(t *testing.T) {
 	// test if marshalled bytes match fixture
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionRoutePrefix: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionRoutePrefix didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -1376,7 +1376,7 @@ func TestOptionRoutePrefix(t *testing.T) {
 	})
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionRoutePrefix: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionRoutePrefix didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
@@ -1396,7 +1396,7 @@ func TestOptionRoutePrefix(t *testing.T) {
 
 	if mshByte, err := opt.Marshal(); err != nil {
 		t.Errorf("error marshalling OptionRoutePrefix: %s", err)
-	} else if bytes.Compare(mshByte, fixtbyte) != 0 {
+	} else if !bytes.Equal(fixtbyte, mshByte) {
 		t.Errorf("marshalled OptionRoutePrefix didn't match fixture!\nfixture: %v\nmarshal: %v", fixtbyte, mshByte)
 	}
 
